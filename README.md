@@ -24,7 +24,7 @@ The project uses several `Python` libraries, including `pygame` and `customtkint
 
 To run the level editor, execute the build-and-run.sh script from the root of the repository:  
 ```
-	./build-and-run.sh
+./build-and-run.sh
 ```
 
 This script will handle setting up the necessary environment and launching the application.
@@ -33,7 +33,7 @@ This script will handle setting up the necessary environment and launching the a
 
 To package the project into a standalone executable using PyInstaller, run the pack.sh script:  
 ```
-	./pack.sh
+./pack.sh
 ```
 
 This will create a distributable package of the level editor.
