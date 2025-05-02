@@ -1,0 +1,6 @@
+logs.log
+temp_language.txt
+Map-Editor
+.vscode
+.venv
+__pycache__

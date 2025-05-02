@@ -1,0 +1,677 @@
+#  Dimensions
+window_width: 1600
+window_height: 900
+
+window_fill_color: [57, 67, 76]
+window_fill_color_theme: 
+    true: [57, 67, 76]
+    false: [216, 222, 233]
+
+drawing_area_canvas_width: 2560
+drawing_area_canvas_height: 1024
+drawing_area_canvas_fill_color: [30, 39, 46]
+drawing_area_canvas_fill_color_theme:
+    true: [30, 39, 46]
+    false: [216, 222, 233]
+drawing_area_canvas_grid_cell_size: 64
+drawing_area_canvas_grid_color: [57, 67, 76]
+drawing_area_canvas_grid_color_theme:
+    true: [57, 67, 76]
+    false: [229, 233, 240]
+drawing_area_preview_hit_box_outline_color: [229, 233, 240]
+drawing_area_preview_hit_box_outline_color_theme: 
+    true: [229, 233, 240]
+    false: [57, 67, 76]
+drawing_area_delete_selection_outline_color: [255, 94, 87]
+drawing_area_preview_hit_box_outline_width: 1
+drawing_area_delete_selection_outline_width: 1
+drawing_area_snap_threshold: 1
+drawing_area_delete_highlight_color: [255, 94, 87]
+drawing_area_scrolling_speed: 10
+
+hitbox_color: [229, 233, 240]
+hitbox_color_theme:
+    true: [229, 233, 240]
+    false: [57, 67, 76]
+
+sprite_selection_color: [76, 86, 106]
+
+sprite_panel_fill_color: [57, 67, 76]
+sprite_panel_fill_color_theme:
+    true: [57, 67, 76]
+    false: [229, 233, 240]
+sprite_panel_padding: 10
+sprite_panel_scroll_speed: 40
+
+display_fill_color: [57, 67, 76]
+display_fill_color_theme:
+    true: [57, 67, 76]
+    false: [229, 233, 240]
+display_font_size: 16
+display_icon_size: [24, 24]
+display_cursor_size: 14
+display_tooltip_padding: 5
+display_cursor_icon_src: "display_cursor_pointer_light.png"
+display_cursor_icon_src_theme:
+    true: "display_cursor_pointer_light.png"
+    false: "display_cursor_pointer_dark.png"
+display_cursor_danger_icon_src: "display_cursor_pointer_danger.png"
+display_panning_icon_src: "display_cursor_panning_light.png"
+display_panning_icon_src_theme:
+    true: "display_cursor_panning_light.png"
+    false: "display_cursor_panning_dark.png"
+display_mode_icon_delete: "display_delete.png"
+display_mode_icon_sprite: "display_sprite.png"
+display_mode_icon_hitbox: "display_hitbox.png"
+display_game_file_not_exists: "display_game_file_not_exists.png"
+display_game_file_exists: "display_game_file_exists.png"
+
+control_fill_color: [57, 67, 76]
+control_fill_color_theme:
+    true: [57, 67, 76]
+    false: [229, 233, 240]
+control_icon_size: [24, 24]
+
+dialog_overlay_fill_color: [50, 50, 50]
+dialog_box_fill_color: [57, 67, 76]
+dialog_box_fill_color_theme:
+    true: [57, 67, 76]
+    false: [229, 233, 240]
+dialog_max_box_width: 600
+dialog_max_box_height: 300
+dialog_font_size: 16
+dialog_button_width: 100
+dialog_button_height: 50
+dialog_box_padding_pct: .8
+dialog_inter_button_gap: 10
+dialog_min_message_top_padding: 50
+dialog_min_button_bottom_padding: 50
+
+font_color: [229, 233, 240]
+font_color_theme:
+    true: [229, 233, 240]
+    false: [57, 67, 76]
+font_family: "Yu Gothic Regular"
+
+theme_dependent_fields:
+    - "window_fill_color"
+    - "drawing_area_canvas_fill_color"
+    - "drawing_area_canvas_grid_color"
+    - "drawing_area_preview_hit_box_outline_color"
+    - "hitbox_color"
+    - "sprite_panel_fill_color"
+    - "display_fill_color"
+    - "control_fill_color"
+    - "dialog_box_fill_color"
+    - "font_color"
+    - "display_cursor_icon_src"
+    - "display_panning_icon_src"
+
+dark_theme: true
+
+icon_directory: "./resources/images/icons"
+font_directory: "./resources/fonts"
+font_file_name:
+    Arabic: "Arabic-NotoSans-Light.ttf"
+    Burmese: "Burmese-NotoSans-Light.ttf"
+    English: "NotoSans-Light.ttf"
+    Spanish: "NotoSans-Light.ttf"
+    French: "NotoSans-Light.ttf"
+    Japanese: "Japanese-NotoSans-Light.ttf"
+    Chinese: "Chinese-NotoSans-Light.ttf"
+sprite_directory: "."
+map_output_directory: "."
+map_output_filename: "map.json"
+
+modes:
+    - "sprite"
+    - "hitbox"
+    - "delete"
+mode_hints:
+    - "Single-click to place a sprite"
+    - "Click and drag to draw a hitbox"
+    - "Single-click to delete a sprite or a hitbox or click and drag to delete multiple"
+mode_icon_files:
+    - "display_sprite.png"
+    - "display_hitbox.png"
+    - "display_delete.png"
+
+# Colors for reference
+light_purple: [112, 111, 211]
+dark_purple: [64, 64, 122]
+
+light_grey: [247, 241, 227]
+dark_grey: [170, 166, 157]
+
+light_green: [51, 217, 178]
+dark_green: [33, 140, 116]
+
+light_red: [255, 82, 82]
+dark_red: [179, 57, 57]
+
+light_blue: [52, 172, 224]
+dark_blue: [34, 112, 147]
+
+light_orange: [255, 121, 63]
+dark_orange: [205, 97, 51]
+
+light_yellow: [255, 218, 121]
+dark_yellow: [255, 177, 66]
+
+path_fields:
+    - "game_runner_game_executable_path"
+    - "icon_directory"
+    - "font_directory"
+    - "sprite_directory"
+    - "map_output_directory"
+    - "language_file_directory"
+
+language: "English"
+language_config_field:
+    label: Language
+    type: str_options
+    options: 
+        - English
+        - Arabic
+        - Burmese
+        - Spanish
+        - French
+        - Japanese
+        - Chinese
+    default_value: English
+language_file_name: temp_language.txt
+language_file_directory: "."
+
+ui_user_definable_fields:
+    window_width:
+        label: Windiw Width
+        type: int
+    window_height:
+        label: Window Height
+        type: int
+    drawing_area_canvas_width:
+        label: Level Map Width
+        type: int
+    drawing_area_canvas_height:
+        label: Level Map Height
+        type: int
+    drawing_area_canvas_grid_cell_size:
+        label: Size of grid cells
+        type: int
+    drawing_area_snap_threshold:
+        label: Snapping Threshold
+        type: int
+    game_runner_game_executable_path:
+        label: Game Executable Path
+        type: file
+    sprite_directory:
+        label: Sprite Directory
+        type: directory
+        default_value: "."
+        required: true
+    map_output_directory:
+        label: Map Output Directory
+        type: directory
+        default_value: "."
+        required: true
+    dark_theme:
+        label: Dark Theme
+        default_value: true
+        type: bool
+
+i18n:
+    English:
+        app:
+            window_title: Map Editor
+            config_ui:
+                window_title:
+                    browse_game_executable_file: Browse Game Executable
+                    initial_configuration: Initial Configuration
+                game_executable_path_label: Game Executable Path
+                all_set: All Set
+                set_button: Set
+                cancel_button: Cancel
+                browse: Browse
+                default: Default
+                labels:
+                    drawing_area_canvas_width: Level Map Width
+                    drawing_area_canvas_height: Level Map Height
+                    game_runner_game_executable_path: Game Executable Path
+                    sprite_directory: Sprite Directory
+                    map_output_directory: Map Output Directory
+                    dark_theme: Dark Theme
+                    language: Language
+                    drawing_area_canvas_grid_cell_size: Canvas Grid Size
+                    drawing_area_snap_threshold: Snapping Distance
+                    window_width: Window Width
+                    window_height: Window Height
+            dialogs:
+                no_game_specified:
+                    message: You have not specified a game to run!
+                    add_game_button: Add game
+                    back_button: Back
+                unsaved_changes_run:
+                    message: You have unsaved changes. Run with old map?
+                    just_run_button: Just run
+                    save_first_button: Save first
+                unsaved_changes_quit:
+                    message: You have unsaved changes. Quit?
+                    just_quit_button: Just quit
+                    save_first_button: Save first
+            controls:
+                save:
+                    hint_disabled: No changes to save
+                    hint_enabled: Save level data
+                delete:
+                    hint_disabled_already_in_mode: Already in delete mode
+                    hint_disabled_no_objects: Can't switch to delete-mode with no objects to delete
+                    hint_enabled: Switch to delete mode
+                run:
+                    hint_disabled_running: 'Can''t run the game now, stop the running game'
+                    hint_disabled_no_objects: 'Can''t run the game now, add level objects'
+                    hint_enabled: Run the selected game
+                stop:
+                    hint_disabled: No running game to stop
+                    hint_enabled: Stop the running game
+                game_file:
+                    hint_disabled: Can't load file
+                    hint_enabled: Load a game file to be run
+            display:
+                game_file_status_no_game: No game loaded
+                game_file_status_game_loaded: Game loaded
+                mode_sprite: Sprite mode
+                mode_sprite_hint: Click once to place a sprite
+                mode_hitbox: Hitbox mode
+                mode_hitbox_hint: Click and drag to draw a hitbox
+                mode_delete: Delete mode
+                mode_delete_hint: Click once to delete a sprite or a hitbox, or click and drag to bulk delete (sprites and hitboxes)
+    Arabic:
+        app:
+            window_title: محرر الخريطة
+            config_ui:
+                window_title:
+                    browse_game_executable_file: استعراض ملف اللعبة التنفيذي
+                    initial_configuration: الإعداد الأولي
+                game_executable_path_label: مسار ملف اللعبة التنفيذي
+                all_set: جاهز تمامًا
+                set_button: تعيين
+                cancel_button: إلغاء
+                browse: استعراض
+                default: افتراضي
+                labels:
+                    drawing_area_canvas_width: عرض خريطة المستوى
+                    drawing_area_canvas_height: ارتفاع خريطة المستوى
+                    game_runner_game_executable_path: مسار ملف اللعبة التنفيذي
+                    sprite_directory: دليل الرسوم المتحركة (Sprite)
+                    map_output_directory: دليل إخراج الخريطة
+                    dark_theme: المظهر الداكن
+                    language: اللغة
+                    drawing_area_canvas_grid_cell_size: حجم شبكة اللوحة
+                    drawing_area_snap_threshold: مسافة الالتقاط
+                    window_width: عرض النافذة
+                    window_height: ارتفاع النافذة
+            dialogs:
+                no_game_specified:
+                    message: لم تقم بتحديد لعبة لتشغيلها!
+                    add_game_button: إضافة لعبة
+                    back_button: رجوع
+                unsaved_changes_run:
+                    message: لديك تغييرات غير محفوظة. تشغيل بالخريطة القديمة؟
+                    just_run_button: تشغيل فقط
+                    save_first_button: حفظ أولاً
+                unsaved_changes_quit:
+                    message: لديك تغييرات غير محفوظة. إنهاء؟
+                    just_quit_button: إنهاء فقط
+                    save_first_button: حفظ أولاً
+            controls:
+                save:
+                    hint_disabled: لا توجد تغييرات للحفظ
+                    hint_enabled: حفظ بيانات المستوى
+                delete:
+                    hint_disabled_already_in_mode: بالفعل في وضع الحذف
+                    hint_disabled_no_objects: لا يمكن التبديل إلى وضع الحذف بدون كائنات للحذف
+                    hint_enabled: التبديل إلى وضع الحذف
+                run:
+                    hint_disabled_running: 'لا يمكن تشغيل اللعبة الآن، أوقف اللعبة قيد التشغيل'
+                    hint_disabled_no_objects: 'لا يمكن تشغيل اللعبة الآن، أضف كائنات المستوى'
+                    hint_enabled: تشغيل اللعبة المحددة
+                stop:
+                    hint_disabled: لا توجد لعبة قيد التشغيل لإيقافها
+                    hint_enabled: إيقاف اللعبة قيد التشغيل
+                game_file:
+                    hint_disabled: لا يمكن تحميل الملف
+                    hint_enabled: تحميل ملف لعبة ليتم تشغيله
+            display:
+                game_file_status_no_game: لم يتم تحميل لعبة
+                game_file_status_game_loaded: تم تحميل اللعبة
+                mode_sprite: وضع الرسوم المتحركة (Sprite)
+                mode_sprite_hint: انقر مرة واحدة لوضع رسم متحرك
+                mode_hitbox: وضع Hitbox
+                mode_hitbox_hint: انقر واسحب لرسم Hitbox
+                mode_delete: وضع الحذف
+                mode_delete_hint: انقر مرة واحدة لحذف رسم متحرك أو Hitbox، أو انقر واسحب للحذف المجمع (الرسوم المتحركة وHitboxes)
+    Burmese:
+        app:
+            window_title: မြေပုံ တည်းဖြတ်သူ
+            config_ui:
+                window_title:
+                    browse_game_executable_file: ဂိမ်း စတင်ရန်ဖိုင် ရှာဖွေရန်
+                    initial_configuration: ကနဦး သတ်မှတ်မှု
+                game_executable_path_label: ဂိမ်း စတင်ရန်ဖိုင် လမ်းကြောင်း
+                all_set: အားလုံး အဆင်သင့်ဖြစ်ပြီ
+                set_button: သတ်မှတ်ရန်
+                cancel_button: ဖျက်သိမ်းရန်
+                browse: ရှာဖွေရန်
+                default: မူလ
+                labels:
+                    drawing_area_canvas_width: အဆင့်မြေပုံ အကျယ်
+                    drawing_area_canvas_height: အဆင့်မြေပုံ အမြင့်
+                    game_runner_game_executable_path: ဂိမ်း စတင်ရန်ဖိုင် လမ်းကြောင်း
+                    sprite_directory: Sprite လမ်းညွှန်
+                    map_output_directory: မြေပုံ ထုတ်ဖော်ရန် လမ်းညွှန်
+                    dark_theme: အမှောင် အပြင်အဆင်
+                    language: ဘာသာစကား
+                    drawing_area_canvas_grid_cell_size: Canvas ဇယားကွက် အရွယ်အစား
+                    drawing_area_snap_threshold: ဆွဲကပ်မည့် အကွာအဝေး
+                    window_width: ပြတင်းပေါက် အကျယ်
+                    window_height: ပြတင်းပေါက် အမြင့်
+            dialogs:
+                no_game_specified:
+                    message: သင် စတင်ရန် ဂိမ်းတစ်ခု သတ်မှတ်ထားခြင်း မရှိသေးပါ!
+                    add_game_button: ဂိမ်း ထည့်ရန်
+                    back_button: နောက်သို့
+                unsaved_changes_run:
+                    message: သိမ်းဆည်းခြင်းမပြုရသေးသော အပြောင်းအလဲများ ရှိပါသည်။ မြေပုံ အဟောင်းဖြင့် စတင်မည်လား?
+                    just_run_button: စတင်လိုက်ပါ
+                    save_first_button: အရင် သိမ်းပါ
+                unsaved_changes_quit:
+                    message: သိမ်းဆည်းခြင်းမပြုရသေးသော အပြောင်းအလဲများ ရှိပါသည်။ ထွက်မည်လား?
+                    just_quit_button: ထွက်လိုက်ပါ
+                    save_first_button: အရင် သိမ်းပါ
+            controls:
+                save:
+                    hint_disabled: သိမ်းဆည်းရန် အပြောင်းအလဲများ မရှိပါ
+                    hint_enabled: အဆင့် ဒေတာ သိမ်းဆည်းရန်
+                delete:
+                    hint_disabled_already_in_mode: ဖျက်ရန် mode တွင် ရှိပြီးသား
+                    hint_disabled_no_objects: ဖျက်ရန် object များ မရှိဘဲ ဖျက်ရန် mode သို့ ပြောင်း၍ မရပါ
+                    hint_enabled: ဖျက်ရန် mode သို့ ပြောင်းရန်
+                run:
+                    hint_disabled_running: 'ယခု ဂိမ်းကို စတင်၍ မရပါ၊ လည်ပတ်နေသော ဂိမ်းကို ရပ်ပါ'
+                    hint_disabled_no_objects: 'ယခု ဂိမ်းကို စတင်၍ မရပါ၊ အဆင့် object များ ထည့်ပါ'
+                    hint_enabled: ရွေးချယ်ထားသော ဂိမ်းကို စတင်ရန်
+                stop:
+                    hint_disabled: ရပ်ရန် လည်ပတ်နေသော ဂိမ်း မရှိပါ
+                    hint_enabled: လည်ပတ်နေသော ဂိမ်းကို ရပ်ရန်
+                game_file:
+                    hint_disabled: ဖိုင်ကို တင်၍ မရပါ
+                    hint_enabled: စတင်ရန် ဂိမ်းဖိုင်တစ်ခု တင်ရန်
+            display:
+                game_file_status_no_game: ဂိမ်း မတင်ရသေးပါ
+                game_file_status_game_loaded: ဂိမ်း တင်ပြီးပြီ
+                mode_sprite: Sprite mode
+                mode_sprite_hint: Sprite ထားရန် တစ်ချက်နှိပ်ပါ
+                mode_hitbox: Hitbox mode
+                mode_hitbox_hint: Hitbox ဆွဲရန် နှိပ်၍ ဆွဲပါ
+                mode_delete: ဖျက်ရန် mode
+                mode_delete_hint: Sprite သို့မဟုတ် Hitbox ကို ဖျက်ရန် တစ်ချက်နှိပ်ပါ၊ သို့မဟုတ် အများအပြား ဖျက်ရန် (sprites နှင့် hitboxes) နှိပ်၍ ဆွဲပါ
+    Spanish:
+        app:
+            window_title: Editor de Mapas
+            config_ui:
+                window_title:
+                    browse_game_executable_file: Examinar Archivo Ejecutable del Juego
+                    initial_configuration: Configuración Inicial
+                game_executable_path_label: Ruta del Archivo Ejecutable del Juego
+                all_set: Todo Listo
+                set_button: Establecer
+                cancel_button: Cancelar
+                browse: Examinar
+                default: Predeterminado
+                labels:
+                    drawing_area_canvas_width: Ancho del Mapa de Nivel
+                    drawing_area_canvas_height: Altura del Mapa de Nivel
+                    game_runner_game_executable_path: Ruta del Archivo Ejecutable del Juego
+                    sprite_directory: Directorio de Sprites
+                    map_output_directory: Directorio de Salida del Mapa
+                    dark_theme: Tema Oscuro
+                    language: Idioma
+                    drawing_area_canvas_grid_cell_size: Tamaño de Celda de la Cuadrícula del Canvas
+                    drawing_area_snap_threshold: Distancia de Ajuste
+                    window_width: Ancho de la Ventana
+                    window_height: Alto de la Ventana
+            dialogs:
+                no_game_specified:
+                    message: ¡No has especificado un juego para ejecutar!
+                    add_game_button: Añadir juego
+                    back_button: Volver
+                unsaved_changes_run:
+                    message: Tienes cambios sin guardar. ¿Ejecutar con mapa antiguo?
+                    just_run_button: Solo ejecutar
+                    save_first_button: Guardar primero
+                unsaved_changes_quit:
+                    message: Tienes cambios sin guardar. ¿Salir?
+                    just_quit_button: Solo salir
+                    save_first_button: Guardar primero
+            controls:
+                save:
+                    hint_disabled: No hay cambios que guardar
+                    hint_enabled: Guardar datos del nivel
+                delete:
+                    hint_disabled_already_in_mode: Ya en modo eliminar
+                    hint_disabled_no_objects: No se puede cambiar a modo eliminar sin objetos que eliminar
+                    hint_enabled: Cambiar a modo eliminar
+                run:
+                    hint_disabled_running: 'No se puede ejecutar el juego ahora, detén el juego en ejecución'
+                    hint_disabled_no_objects: 'No se puede ejecutar el juego ahora, añade objetos de nivel'
+                    hint_enabled: Ejecutar el juego seleccionado
+                stop:
+                    hint_disabled: No hay juego en ejecución que detener
+                    hint_enabled: Detener el juego en ejecución
+                game_file:
+                    hint_disabled: No se puede cargar el archivo
+                    hint_enabled: Cargar un archivo de juego para ejecutar
+            display:
+                game_file_status_no_game: Ningún juego cargado
+                game_file_status_game_loaded: Juego cargado
+                mode_sprite: Modo Sprite
+                mode_sprite_hint: Haz clic una vez para colocar un sprite
+                mode_hitbox: Modo Hitbox
+                mode_hitbox_hint: Haz clic y arrastra para dibujar un hitbox
+                mode_delete: Modo Eliminar
+                mode_delete_hint: Haz clic una vez para eliminar un sprite o un hitbox, o haz clic y arrastra para eliminar en masa (sprites y hitboxes)
+    French:
+        app:
+            window_title: Éditeur de Carte
+            config_ui:
+                window_title:
+                    browse_game_executable_file: Parcourir le Fichier Exécutable du Jeu
+                    initial_configuration: Configuration Initiale
+                game_executable_path_label: Chemin du Fichier Exécutable du Jeu
+                all_set: Tout est Prêt
+                set_button: Définir
+                cancel_button: Annuler
+                browse: Parcourir
+                default: Par défaut
+                labels:
+                    drawing_area_canvas_width: Largeur de la Carte de Niveau
+                    drawing_area_canvas_height: Hauteur de la Carte de Niveau
+                    game_runner_game_executable_path: Chemin du Fichier Exécutable du Jeu
+                    sprite_directory: Répertoire des Sprites
+                    map_output_directory: Répertoire de Sortie de la Carte
+                    dark_theme: Thème Sombre
+                    language: Langue
+                    drawing_area_canvas_grid_cell_size: Taille de la Grille du Canvas
+                    drawing_area_snap_threshold: Distance d'Accrochage
+                    window_width: Largeur de la Fenêtre
+                    window_height: Hauteur de la Fenêtre
+            dialogs:
+                no_game_specified:
+                    message: Vous n'avez pas spécifié de jeu à exécuter !
+                    add_game_button: Ajouter un jeu
+                    back_button: Retour
+                unsaved_changes_run:
+                    message: Vous avez des modifications non enregistrées. Exécuter avec l'ancienne carte ?
+                    just_run_button: Juste exécuter
+                    save_first_button: Enregistrer d'abord
+                unsaved_changes_quit:
+                    message: Vous avez des modifications non enregistrées. Quitter ?
+                    just_quit_button: Juste quitter
+                    save_first_button: Enregistrer d'abord
+            controls:
+                save:
+                    hint_disabled: Aucune modification à enregistrer
+                    hint_enabled: Enregistrer les données du niveau
+                delete:
+                    hint_disabled_already_in_mode: Déjà en mode suppression
+                    hint_disabled_no_objects: Impossible de passer en mode suppression sans objets à supprimer
+                    hint_enabled: Passer en mode suppression
+                run:
+                    hint_disabled_running: 'Impossible d''exécuter le jeu maintenant, arrêtez le jeu en cours'
+                    hint_disabled_no_objects: 'Impossible d''exécuter le jeu maintenant, ajoutez des objets de niveau'
+                    hint_enabled: Exécuter le jeu sélectionné
+                stop:
+                    hint_disabled: Aucun jeu en cours à arrêter
+                    hint_enabled: Arrêter le jeu en cours
+                game_file:
+                    hint_disabled: Impossible de charger le fichier
+                    hint_enabled: Charger un fichier de jeu à exécuter
+            display:
+                game_file_status_no_game: Aucun jeu chargé
+                game_file_status_game_loaded: Jeu chargé
+                mode_sprite: Mode Sprite
+                mode_sprite_hint: Cliquez une fois pour placer un sprite
+                mode_hitbox: Mode Hitbox
+                mode_hitbox_hint: Cliquez et faites glisser pour dessiner une hitbox
+                mode_delete: Mode Suppression
+                mode_delete_hint: Cliquez une fois pour supprimer un sprite ou une hitbox, ou cliquez et faites glisser pour supprimer en masse (sprites et hitboxes)
+    Japanese:
+        app:
+            window_title: マップエディター
+            config_ui:
+                window_title:
+                    browse_game_executable_file: ゲーム実行可能ファイルを参照
+                    initial_configuration: 初期設定
+                game_executable_path_label: ゲーム実行可能ファイルのパス
+                all_set: すべて設定されました
+                set_button: 設定
+                cancel_button: キャンセル
+                browse: 参照
+                default: デフォルト
+                labels:
+                    drawing_area_canvas_width: レベルマップの幅
+                    drawing_area_canvas_height: レベルマップの高さ
+                    game_runner_game_executable_path: ゲーム実行可能ファイルのパス
+                    sprite_directory: スプライトディレクトリ
+                    map_output_directory: マップ出力ディレクトリ
+                    dark_theme: ダークテーマ
+                    language: 言語
+                    drawing_area_canvas_grid_cell_size: キャンバスグリッドサイズ
+                    drawing_area_snap_threshold: スナップ距離
+                    window_width: ウィンドウの幅
+                    window_height: ウィンドウの高さ
+            dialogs:
+                no_game_specified:
+                    message: 実行するゲームを指定していません！
+                    add_game_button: ゲームを追加
+                    back_button: 戻る
+                unsaved_changes_run:
+                    message: 保存されていない変更があります。古いマップで実行しますか？
+                    just_run_button: とりあえず実行
+                    save_first_button: まず保存
+                unsaved_changes_quit:
+                    message: 保存されていない変更があります。終了しますか？
+                    just_quit_button: とりあえず終了
+                    save_first_button: まず保存
+            controls:
+                save:
+                    hint_disabled: 保存する変更はありません
+                    hint_enabled: レベルデータを保存
+                delete:
+                    hint_disabled_already_in_mode: すでに削除モードです
+                    hint_disabled_no_objects: 削除するオブジェクトがない場合、削除モードに切り替えることはできません
+                    hint_enabled: 削除モードに切り替える
+                run:
+                    hint_disabled_running: '現在ゲームを実行できません。実行中のゲームを停止してください'
+                    hint_disabled_no_objects: '現在ゲームを実行できません。レベルオブジェクトを追加してください'
+                    hint_enabled: 選択したゲームを実行
+                stop:
+                    hint_disabled: 停止する実行中のゲームはありません
+                    hint_enabled: 実行中のゲームを停止
+                game_file:
+                    hint_disabled: ファイルをロードできません
+                    hint_enabled: 実行するゲームファイルをロード
+            display:
+                game_file_status_no_game: ゲームはロードされていません
+                game_file_status_game_loaded: ゲームがロードされました
+                mode_sprite: スプライトモード
+                mode_sprite_hint: 一度クリックしてスプライトを配置します
+                mode_hitbox: ヒットボックスモード
+                mode_hitbox_hint: クリック＆ドラッグでヒットボックスを描画します
+                mode_delete: 削除モード
+                mode_delete_hint: 一度クリックしてスプライトまたはヒットボックスを削除するか、クリック＆ドラッグで一括削除します（スプライトとヒットボックス）
+    Chinese:
+        app:
+            window_title: 地图编辑器
+            config_ui:
+                window_title:
+                    browse_game_executable_file: 浏览游戏可执行文件
+                    initial_configuration: 初始配置
+                game_executable_path_label: 游戏可执行文件路径
+                all_set: 全部设置完成
+                set_button: 设置
+                cancel_button: 取消
+                browse: 浏览
+                default: 默认
+                labels:
+                    drawing_area_canvas_width: 关卡地图宽度
+                    drawing_area_canvas_height: 关卡地图高度
+                    game_runner_game_executable_path: 游戏可执行文件路径
+                    sprite_directory: 精灵目录
+                    map_output_directory: 地图输出目录
+                    dark_theme: 深色主题
+                    language: 语言
+                    drawing_area_canvas_grid_cell_size: 画布网格大小
+                    drawing_area_snap_threshold: 吸附距离
+                    window_width: 窗口宽度
+                    window_height: 窗口高度
+            dialogs:
+                no_game_specified:
+                    message: 您还没有指定要运行的游戏！
+                    add_game_button: 添加游戏
+                    back_button: 返回
+                unsaved_changes_run:
+                    message: 您有未保存的更改。用旧地图运行吗？
+                    just_run_button: 只运行
+                    save_first_button: 先保存
+                unsaved_changes_quit:
+                    message: 您有未保存的更改。退出吗？
+                    just_quit_button: 只退出
+                    save_first_button: 先保存
+            controls:
+                save:
+                    hint_disabled: 没有要保存的更改
+                    hint_enabled: 保存关卡数据
+                delete:
+                    hint_disabled_already_in_mode: 已处于删除模式
+                    hint_disabled_no_objects: 没有可删除的对象，无法切换到删除模式
+                    hint_enabled: 切换到删除模式
+                run:
+                    hint_disabled_running: '现在无法运行游戏，请停止正在运行的游戏'
+                    hint_disabled_no_objects: '现在无法运行游戏，请添加关卡对象'
+                    hint_enabled: 运行选定的游戏
+                stop:
+                    hint_disabled: 没有正在运行的游戏可停止
+                    hint_enabled: 停止正在运行的游戏
+                game_file:
+                    hint_disabled: 无法加载文件
+                    hint_enabled: 加载要运行的游戏文件
+            display:
+                game_file_status_no_game: 未加载游戏
+                game_file_status_game_loaded: 游戏已加载
+                mode_sprite: 精灵模式
+                mode_sprite_hint: 单击一次放置一个精灵
+                mode_hitbox: 碰撞箱模式
+                mode_hitbox_hint: 单击并拖动绘制一个碰撞箱
+                mode_delete: 删除模式
+                mode_delete_hint: 单击一次删除一个精灵或碰撞箱，或单击并拖动批量删除（精灵和碰撞箱）
