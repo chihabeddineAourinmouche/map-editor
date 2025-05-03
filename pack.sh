@@ -9,10 +9,10 @@ RESOURCES_DIR="resources" # Directory containing resources to include
 
 # --- Directories ---
 # The root directory for the final package. PyInstaller will place contents here initially.
-if [-n "$1"]; then
-	DISTRIBUTABLE_ROOT="Map-Editor"
-else
+if [ -n "$1" ]; then
 	DISTRIBUTABLE_ROOT="$1/Map-Editor"
+else
+	DISTRIBUTABLE_ROOT="Map-Editor"
 fi
 # The intermediate directory PyInstaller creates in one-folder mode
 INTERMEDIATE_DIR="$DISTRIBUTABLE_ROOT/$APP_NAME"
@@ -23,6 +23,8 @@ VIRTUAL_ENV_DIR=".venv" # Directory for the virtual environment
 # --- PyInstaller Options ---
 PYINSTALLER_OPTS=(
     --noconfirm
+    --noconsole
+    --icon="$RESOURCES_DIR/images/icons/map-editor.ico"
     --onefile # Uncomment this line if you want a single executable file (disables _internal dir)
     --name "$APP_NAME"
     --distpath "$DISTRIBUTABLE_ROOT" # PyInstaller will create $DISTRIBUTABLE_ROOT/$APP_NAME here

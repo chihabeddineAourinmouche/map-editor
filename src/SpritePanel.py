@@ -108,6 +108,9 @@ class SpritePanel(SurfaceRect):
     def get_selected_sprite_id(self) -> int:
         return self.selected_sprite_id
     
+    def has_sprite_with_name(self, name: str) -> bool:
+        return name in list(map(lambda s : s.get_name(), self.sprites))
+    
     def set_selected_sprite_id(self, _id: int) -> None:
         self.selected_sprite_id = _id
 

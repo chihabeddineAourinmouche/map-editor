@@ -244,7 +244,7 @@ class App:
         elif not self.check_pristine():
             self.set_dialog(Dialog(
                 self.screen,
-                self.i18n.translate("app.dialogs.unsaved_changes_run"),
+                self.i18n.translate("app.dialogs.unsaved_changes_run.message"),
                 {
                    self.i18n.translate( "app.dialogs.unsaved_changes_run.just_run_button"): {
                         "callback": self.request_run_game,
@@ -398,13 +398,29 @@ class App:
         map_data_file_path: str = self.browse_map_data_file()
         if map_data_file_path != None:
             data: Dict = load_json_to_dict(map_data_file_path)
-            if not data.get("sprites"):
-                data["sprites"] = []
-            if not data.get("hitboxes"):
-                data["hitboxes"] = []
-            if data != None:
-                self.drawing_area.load_data(data)
-                self.map_data = copy.deepcopy(data)
+            if all(map(lambda d : self.sprite_panel.has_sprite_with_name(d["file_name"]), data["sprites"])):
+                if not data.get("sprites"):
+                    data["sprites"] = []
+                if not data.get("hitboxes"):
+                    data["hitboxes"] = []
+                if data != None:
+                    self.drawing_area.load_data(data)
+                    self.map_data = copy.deepcopy(data)
+            else:
+                self.set_dialog(Dialog(
+                    self.screen,
+                    self.i18n.translate("app.dialogs.map_data_sprite_mismatch.message"),
+                    {
+                        self.i18n.translate("app.dialogs.map_data_sprite_mismatch.cancel"): {
+                            "callback": self.close_dialog,
+                            "filled": False
+                        },
+                        self.i18n.translate("app.dialogs.map_data_sprite_mismatch.load_another"): {
+                            "callback": self.request_load_map_data,
+                            "filled": True
+                        }
+                    }
+                ))
 
     def save_map_data_then_load_new_map_data(self):
         self.save_map_data()
