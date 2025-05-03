@@ -8,7 +8,7 @@ from .SurfaceRect import SurfaceRect
 
 class Sprite(SurfaceRect):
     selection_color: Color = None
-    id_count = count()
+    id_counter = count()
     
     def __init__(self,
         x: int, y: int, screen: Surface,
@@ -23,7 +23,7 @@ class Sprite(SurfaceRect):
         self.topleft: Coords = [x, y]
         
         self.name: str = name
-        self.id: int = _id or next(self.id_count)
+        self.id: int = _id or next(self.id_counter)
         self.color: Color = self.selection_color
         
         self.image_cache: ImageCache = ImageCache([])

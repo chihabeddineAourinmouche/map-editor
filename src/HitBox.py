@@ -8,8 +8,8 @@ class HitBox:
     
     id_counter = count()
     
-    def __init__(self, x: int, y: int, width: int, height: int) -> None:
-        self.id: str = next(self.id_counter)
+    def __init__(self, x: int, y: int, width: int, height: int, _id: Optional[int] = None) -> None:
+        self.id: str = _id or next(self.id_counter)
         self.rect: Rect = Rect(x, y, width, height)
         self.alpha_surface: Surface = Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
     

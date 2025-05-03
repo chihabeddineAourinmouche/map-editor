@@ -205,6 +205,22 @@ class DrawingArea(SurfaceRect):
         else:
             self.panning_offset[1] = max(viewport.height - canvas_rect.height, min(0, self.panning_offset[1]))
 
+    def load_sprites(self, data: List[SpriteData]):
+        self.sprites = list(map(
+        lambda s : Sprite(*s.get("coordinates"), self.canvas, ImageCache().get_image(s.get("file_name")), s.get("file_name"), _id=s.get("id")),
+        data
+    ))
+    
+    def load_hitboxes(self, data: List[HitBoxData]):
+        self.hitboxes = list(map(
+            lambda h : HitBox(*h.get("rect"), _id=h.get("id")),
+            data
+        ))
+        
+    def load_data(self, data: Dict[str, Union[List[SpriteData], List[HitBoxData]]]):
+        self.load_sprites(data.get("sprites"))
+        self.load_hitboxes(data.get("hitboxes"))
+
     def _update(self,
         absolute_mouse_pos: Coords,
         event: Event,
@@ -420,7 +436,6 @@ class DrawingArea(SurfaceRect):
 
         if direction_x != None and abs(direction_x) > 0:
             direction_x = abs(direction_x) / direction_x
-            print(direction_x)
             if absolute_mouse_pos[0] >= self.rect.x + self.rect.width:
                 direction_x = 1
             elif absolute_mouse_pos[0] <= self.rect.x:

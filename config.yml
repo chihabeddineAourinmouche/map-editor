@@ -25,7 +25,7 @@ drawing_area_preview_hit_box_outline_color_theme:
 drawing_area_delete_selection_outline_color: [255, 94, 87]
 drawing_area_preview_hit_box_outline_width: 1
 drawing_area_delete_selection_outline_width: 1
-drawing_area_snap_threshold: 1
+drawing_area_snap_threshold: 2
 drawing_area_delete_highlight_color: [255, 94, 87]
 drawing_area_scrolling_speed: 10
 
@@ -227,6 +227,7 @@ i18n:
                 window_title:
                     browse_game_executable_file: Browse Game Executable
                     initial_configuration: Initial Configuration
+                    browse_map_data_file_path: Browse Level Data File
                 game_executable_path_label: Game Executable Path
                 all_set: All Set
                 set_button: Set
@@ -245,6 +246,7 @@ i18n:
                     drawing_area_snap_threshold: Snapping Distance
                     window_width: Window Width
                     window_height: Window Height
+                    map_data_file_path: Level Data File
             dialogs:
                 no_game_specified:
                     message: You have not specified a game to run!
@@ -258,10 +260,16 @@ i18n:
                     message: You have unsaved changes. Quit?
                     just_quit_button: Just quit
                     save_first_button: Save first
+                current_design_will_be_replaced: 
+                    message: Your current level design will be replaced (but not saved)
+                    just_load: Just Load
+                    save_first: Save First
             controls:
                 save:
                     hint_disabled: No changes to save
                     hint_enabled: Save level data
+                load:
+                    hint_enabled: Load a level map
                 delete:
                     hint_disabled_already_in_mode: Already in delete mode
                     hint_disabled_no_objects: Can't switch to delete-mode with no objects to delete
@@ -327,6 +335,8 @@ i18n:
                 save:
                     hint_disabled: لا توجد تغييرات للحفظ
                     hint_enabled: حفظ بيانات المستوى
+                load:
+                    hint_enabled: تحميل خريطة مستوى
                 delete:
                     hint_disabled_already_in_mode: بالفعل في وضع الحذف
                     hint_disabled_no_objects: لا يمكن التبديل إلى وضع الحذف بدون كائنات للحذف
@@ -392,6 +402,8 @@ i18n:
                 save:
                     hint_disabled: သိမ်းဆည်းရန် အပြောင်းအလဲများ မရှိပါ
                     hint_enabled: အဆင့် ဒေတာ သိမ်းဆည်းရန်
+                load:
+                    hint_enabled: အဆင့်မြေပုံကို တင်ပါ
                 delete:
                     hint_disabled_already_in_mode: ဖျက်ရန် mode တွင် ရှိပြီးသား
                     hint_disabled_no_objects: ဖျက်ရန် object များ မရှိဘဲ ဖျက်ရန် mode သို့ ပြောင်း၍ မရပါ
@@ -457,6 +469,8 @@ i18n:
                 save:
                     hint_disabled: No hay cambios que guardar
                     hint_enabled: Guardar datos del nivel
+                load:
+                    hint_enabled: Cargar un mapa de nivel
                 delete:
                     hint_disabled_already_in_mode: Ya en modo eliminar
                     hint_disabled_no_objects: No se puede cambiar a modo eliminar sin objetos que eliminar
@@ -522,6 +536,8 @@ i18n:
                 save:
                     hint_disabled: Aucune modification à enregistrer
                     hint_enabled: Enregistrer les données du niveau
+                load:
+                    hint_enabled: Charger une carte de niveau
                 delete:
                     hint_disabled_already_in_mode: Déjà en mode suppression
                     hint_disabled_no_objects: Impossible de passer en mode suppression sans objets à supprimer
@@ -587,6 +603,8 @@ i18n:
                 save:
                     hint_disabled: 保存する変更はありません
                     hint_enabled: レベルデータを保存
+                load:
+                    hint_enabled: レベルマップをロード
                 delete:
                     hint_disabled_already_in_mode: すでに削除モードです
                     hint_disabled_no_objects: 削除するオブジェクトがない場合、削除モードに切り替えることはできません
@@ -652,6 +670,8 @@ i18n:
                 save:
                     hint_disabled: 没有要保存的更改
                     hint_enabled: 保存关卡数据
+                load:
+                    hint_enabled: 加载关卡地图
                 delete:
                     hint_disabled_already_in_mode: 已处于删除模式
                     hint_disabled_no_objects: 没有可删除的对象，无法切换到删除模式

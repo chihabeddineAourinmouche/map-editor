@@ -146,6 +146,10 @@ class App:
                     "callback": self.save_map_data,
                     "animated_frame_suffixes": [*range(12), 0]
                 },
+                "control_load": {
+                    "callback": self.request_load_map_data,
+                    "animated_frame_suffixes": [*range(5), 0]
+                },
                 "control_delete": {
                     "callback": self.set_delete_mode,
                     "animated_frame_suffixes": [*range(8), 0]
@@ -186,6 +190,7 @@ class App:
         self.dialog_close_callback = self.close_dialog
         
         self.run_game_requested = False
+        
 
         self.modifier_key_CTRL_pressed = False
         
@@ -362,17 +367,67 @@ class App:
             self.switch_mode()
 
     def save_map_data(self):
-        data_to_save: Dict[str, Tuple[Union[Tuple[int, ...], Dict[str, Union[str, Tuple[int, ...]]]]]] = {}
-        for k in self.map_data:
-            data_to_save[k] = list(map(lambda a : {key: value for key, value in a.items() if key != "id"}, self.map_data.copy()[k]))
         try:
             with open(self.map_output_file, "w") as f:
-                json.dump(data_to_save, f, indent=4)
+                json.dump(self.map_data, f, indent=4)
             self.last_saved_map_data = copy.deepcopy(self.map_data)
         except IOError as e:
             Logger.error(f"Error saving map data to JSON file")
 
+    def browse_map_data_file(self) -> str:
+        pygame.mouse.set_visible(True)
+        browsing_ui_fields: Dict = {
+            "map_data_file_path": {
+                "label": self.i18n.translate("app.config_ui.labels.map_data_file_path"),
+                "type": "file",
+                "required": True,
+            }
+        }
+        browsing_ui: ConfigUI = ConfigUI(
+            self.i18n.translate("app.config_ui.window_title.browse_map_data_file_path"),
+            browsing_ui_fields, self.i18n.translate("app.config_ui.set_button"),
+            self.i18n.translate("app.config_ui.cancel_button")
+        )
+        pygame.mouse.set_visible(False)
+        field_key_value: str = browsing_ui.get(field="map_data_file_path")
+        map_data_file_path = field_key_value.get("map_data_file_path")
+        return map_data_file_path
 
+    def load_map_data(self):
+        self.close_dialog()
+        map_data_file_path: str = self.browse_map_data_file()
+        if map_data_file_path != None:
+            data: Dict = load_json_to_dict(map_data_file_path)
+            if not data.get("sprites"):
+                data["sprites"] = []
+            if not data.get("hitboxes"):
+                data["hitboxes"] = []
+            if data != None:
+                self.drawing_area.load_data(data)
+                self.map_data = copy.deepcopy(data)
+
+    def save_map_data_then_load_new_map_data(self):
+        self.save_map_data()
+        self.load_map_data()
+
+    def request_load_map_data(self):
+        if not self.drawing_area.is_empty():
+            self.set_dialog(Dialog(
+                self.screen,
+                self.i18n.translate("app.dialogs.current_design_will_be_replaced.message"),
+                {
+                    self.i18n.translate("app.dialogs.current_design_will_be_replaced.just_load"): {
+                        "callback": self.load_map_data,
+                        "filled": False
+                    },
+                    self.i18n.translate("app.dialogs.current_design_will_be_replaced.save_first"): {
+                        "callback": self.save_map_data_then_load_new_map_data,
+                        "filled": True
+                    }
+                }
+            ))
+        else:
+            self.load_map_data()
 
     # ANCHOR[id=Tooltip]
     def set_tooltip_text(self, text: Optional[str] = None) -> None:
@@ -388,6 +443,13 @@ class App:
                 "hint": {
                     "disabled": self.i18n.translate("app.controls.save.hint_disabled"),
                     "enabled": self.i18n.translate("app.controls.save.hint_enabled"),
+                },
+            },
+            "control_load": {
+                "disabled": False,
+                "hint": {
+                    "disabled": None,
+                    "enabled": self.i18n.translate("app.controls.load.hint_enabled"),
                 },
             },
             "control_delete": {
@@ -467,15 +529,15 @@ class App:
                 
                 # LINK: #DrawingAreaUpdate
                 self.drawing_area.update(event,
-                                        self.is_sprite_mode(),
-                                        self.is_hitbox_mode(),
-                                        self.is_delete_mode(),
-                                        self.sprite_panel.get_sprites(),
-                                        self.sprite_panel.get_selected_sprite_id(),
-                                        self.switch_mode,
-                                        self.add_data,
-                                        self.delete_data
-                                    )
+                    self.is_sprite_mode(),
+                    self.is_hitbox_mode(),
+                    self.is_delete_mode(),
+                    self.sprite_panel.get_sprites(),
+                    self.sprite_panel.get_selected_sprite_id(),
+                    self.switch_mode,
+                    self.add_data,
+                    self.delete_data
+                )
                 
                 # LINK: #ControlUpdate
                 self.control.update(
@@ -521,11 +583,16 @@ class App:
                     elif event.key == KeyboardKeys.R:
                         if (not self.drawing_area.is_empty()) and (not self.game_runner.get_is_running()):
                             self.run_game()
+                    elif event.key == KeyboardKeys.L:
+                        self.request_load_map_data()
             
                     # TODO[id=DEBUG]
                     elif event.key == KeyboardKeys.SPACE:
                         self.stop_running()
-                        # self.game_runner.close_game()
+
+                # FIXME - Keeping this for DEBUG
+                if event.key == KeyboardKeys.SPACE:
+                    pass
     
     def fixed_update(self):
         # ANCHOR[id=AppFixedUpdate]

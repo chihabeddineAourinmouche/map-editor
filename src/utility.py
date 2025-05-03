@@ -1,11 +1,12 @@
 from functools import reduce
 import sys
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import pygame
 import yaml
 import re
 import os
 from .Logger import Logger
+from json import load, JSONDecodeError
 
 log = print
 
@@ -34,6 +35,24 @@ class KeyboardKeys:
     S = pygame.K_s
     W = pygame.K_w
     R = pygame.K_r
+    L = pygame.K_l
+
+def load_json_to_dict(filepath: str) -> Dict:
+    if not os.path.exists(filepath):
+        Logger.error(f"Error: File not found at {filepath}")
+        return None
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = load(f)
+        Logger.success("Json data loded successfully")
+        return data
+    except JSONDecodeError:
+        Logger.error(f"Error: Could not decode JSON from {filepath}. Check file format.")
+        return None
+    except Exception as e:
+        Logger.error(f"An unexpected error occurred while reading {filepath}: {e}")
+        return None
 
 def add_list(c1: List[int], c2: List[int], *c: List[int]) -> List[int]:
     """
