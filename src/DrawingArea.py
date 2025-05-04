@@ -82,7 +82,7 @@ class DrawingArea(SurfaceRect):
             return sprites[0]
         return None
     
-    def get_sprite_id_at(self) -> int:
+    def get_sprite_id_at(self) -> str:
         sprite: Sprite = self.get_sprite_at()
         return sprite.get_id() if sprite else None
     
@@ -110,7 +110,7 @@ class DrawingArea(SurfaceRect):
             *self.rect.size
         )
 
-    def get_hitbox_id_at(self) -> int:
+    def get_hitbox_id_at(self) -> str:
         hitbox: HitBox = self.get_hitbox_at()
         return hitbox.get_id() if hitbox else None
 
@@ -228,10 +228,10 @@ class DrawingArea(SurfaceRect):
         is_hitbox_mode: bool,
         is_delete_mode: bool,
         sprites: Tuple[Sprite, ...],
-        selected_sprite_id: int,
+        selected_sprite_id: str,
         right_click_callback: Callable,
         add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
-        delete_data: Callable[[int, str], None]
+        delete_data: Callable[[str, str], None]
     ) -> None:
         # ANCHOR[id=DrawingAreaUpdate]
         self.relative_mouse_pos = self.get_relative_mouse_pos(absolute_mouse_pos)
@@ -445,13 +445,13 @@ class DrawingArea(SurfaceRect):
     def add_hitbox(self, hitbox: HitBox) -> None:
         self.hitboxes.append(hitbox)
 
-    def delete_hitbox(self, _id: int):
+    def delete_hitbox(self, _id: str):
         self.hitboxes = list(filter(lambda hitbox : hitbox.get_id() != _id, self.hitboxes))
 
     def add_sprite(self, sprite: Sprite) -> None:
         self.sprites.append(sprite)
 
-    def delete_sprite(self, _id: int):
+    def delete_sprite(self, _id: str):
         self.sprites = list(filter(lambda sprite : sprite.get_id() != _id, self.sprites))
 
     def draw_canvas(self) -> None:

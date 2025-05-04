@@ -1,4 +1,4 @@
-from itertools import count
+from uuid import uuid4 as u4
 from typing import Callable, Optional
 from .utility import *
 from .ImageCache import ImageCache
@@ -8,12 +8,11 @@ from .SurfaceRect import SurfaceRect
 
 class Sprite(SurfaceRect):
     selection_color: Color = None
-    id_counter = count()
     
     def __init__(self,
         x: int, y: int, screen: Surface,
         image: Surface,
-        name: str, _id: Optional[int] = None
+        name: str, _id: Optional[str] = None
         
     ):
         super().__init__(x, y, image.get_width(), image.get_height(), screen)
@@ -23,7 +22,7 @@ class Sprite(SurfaceRect):
         self.topleft: Coords = [x, y]
         
         self.name: str = name
-        self.id: int = _id or next(self.id_counter)
+        self.id: str = _id or str(u4())
         self.color: Color = self.selection_color
         
         self.image_cache: ImageCache = ImageCache([])
@@ -78,7 +77,7 @@ class Sprite(SurfaceRect):
         absolute_mouse_pos: Coords,
         event: Event,
         offset: Coords,
-        selected_id: int,
+        selected_id: str,
         left_click_callback: Callable
     ) -> None:
 

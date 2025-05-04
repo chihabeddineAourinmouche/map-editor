@@ -40,8 +40,8 @@ class SpritePanel(SurfaceRect):
         
         self.selected_sprite_id = None
         if len(self.sprites):
-            self.selected_sprite_id = 0
-            self.sprites[self.selected_sprite_id].select()
+            self.selected_sprite_id: str = self.sprites[0].get_id()
+            self.sprites[0].select()
     
     def resize_canvas(self, amount: Coords) -> Surface:
         new_canvas: Surface = Surface((
@@ -105,13 +105,13 @@ class SpritePanel(SurfaceRect):
             *self.rect.size
         )
 
-    def get_selected_sprite_id(self) -> int:
+    def get_selected_sprite_id(self) -> str:
         return self.selected_sprite_id
     
     def has_sprite_with_name(self, name: str) -> bool:
         return name in list(map(lambda s : s.get_name(), self.sprites))
     
-    def set_selected_sprite_id(self, _id: int) -> None:
+    def set_selected_sprite_id(self, _id: str) -> None:
         self.selected_sprite_id = _id
 
     # ANCHOR[id=SpritePanelUpdate]

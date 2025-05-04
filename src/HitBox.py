@@ -1,4 +1,4 @@
-from itertools import count
+from uuid import uuid4 as u4
 from .utility import *
 from .HitBoxData import HitBoxData
 
@@ -6,14 +6,12 @@ class HitBox:
     # ANCHOR - HitBox
     color: Color = None
     
-    id_counter = count()
-    
-    def __init__(self, x: int, y: int, width: int, height: int, _id: Optional[int] = None) -> None:
-        self.id: str = _id or next(self.id_counter)
+    def __init__(self, x: int, y: int, width: int, height: int, _id: Optional[str] = None) -> None:
+        self.id: str = _id or str(u4())
         self.rect: Rect = Rect(x, y, width, height)
         self.alpha_surface: Surface = Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
     
-    def get_id(self):
+    def get_id(self) -> str:
         return self.id
     
     def __dict__(self) -> HitBoxData:

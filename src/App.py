@@ -41,10 +41,10 @@ class App:
             "hitbox": "hitboxes"
         }
         self.last_saved_map_data: Dict[
-            str, Tuple[Union[Tuple[int, ...], Dict[str, Union[int, str, Tuple[int, ...]]]]]
+            str, Tuple[Union[Tuple[int, ...], Dict[str, Union[str, Tuple[int, ...]]]]]
         ] = {"sprites": [], "hitboxes": []}
         self.map_data: Dict[
-            str, Tuple[Union[Tuple[int, ...], Dict[str, Union[int, str, Tuple[int, ...]]]]]
+            str, Tuple[Union[Tuple[int, ...], Dict[str, Union[str, Tuple[int, ...]]]]]
         ] = {"sprites": [], "hitboxes": []}
 
         self.screen_width: int = config.get("window_width")
@@ -170,8 +170,6 @@ class App:
             self.set_tooltip_text,
             config.get("control_fill_color")
         )
-        
-        self.selected_sprite_id: int = 0
         
         Dialog.overlay_fill_color = config.get("dialog_overlay_fill_color")
         Dialog.box_fill_color = config.get("dialog_box_fill_color")
@@ -361,7 +359,7 @@ class App:
     def add_data(self, data: Union[SpriteData, HitBoxData], data_type: str):
         self.map_data[self.data_type_key_dict[data_type]].append(data)
     
-    def delete_data(self, _id: int, data_type: str) -> None:
+    def delete_data(self, _id: str, data_type: str) -> None:
         self.map_data[self.data_type_key_dict[data_type]] = list(filter(lambda d : d["id"] != _id, self.map_data[self.data_type_key_dict[data_type]]))
         if self.drawing_area.is_empty() and self.is_delete_mode():
             self.switch_mode()
