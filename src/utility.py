@@ -8,8 +8,6 @@ import os
 from .Logger import Logger
 from json import load, JSONDecodeError
 
-log = print
-
 # Custom types
 Surface = pygame.Surface
 Rect = pygame.Rect

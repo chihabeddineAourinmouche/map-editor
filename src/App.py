@@ -60,6 +60,7 @@ class App:
 
         Sprite.selection_color = config.get("sprite_selection_color")
         
+        DrawingArea.icon_size = config.get("drawing_area_icon_size")
         self.drawing_area: DrawingArea = DrawingArea(
             config.get("drawing_area_x"),
             config.get("drawing_area_y"),
@@ -78,6 +79,7 @@ class App:
             config.get("drawing_area_snap_threshold"),
             config.get("drawing_area_delete_highlight_color"),
             config.get("drawing_area_scrolling_speed"),
+            config.get("drawing_area_icon_player_position")
         )
         
         self.sprite_panel: SpritePanel = SpritePanel(
@@ -90,24 +92,22 @@ class App:
             config.get("sprite_panel_scroll_speed")
         )
         
-        self.mode_icon_files = config.get("mode_icon_files")
         self.modes = config.get("modes")
-        self.mode_hints = config.get("mode_hints")
-        self.sprite_mode_index = 0
-        self.hitbox_mode_index = 1
-        self.delete_mode_index = 2
+        self.sprite_mode_index, self.hitbox_mode_index, self.delete_mode_index, self.player_mode_index = range(len(self.modes))
         self.mode = self.sprite_mode_index if len(self.sprite_panel.get_sprites()) else self.hitbox_mode_index
         
         self.display_cursor_pointer = config.get("display_cursor_icon_src")
         self.display_cursor_pointer_danger = config.get("display_cursor_danger_icon_src")
         self.display_cursor_panning = config.get("display_panning_icon_src")
         
-        self.display_mode_icon_delete = config.get("display_mode_icon_delete")
-        self.display_mode_icon_sprite = config.get("display_mode_icon_sprite")
-        self.display_mode_icon_hitbox = config.get("display_mode_icon_hitbox")
+        self.display_mode_cursor_icon_delete = config.get("display_mode_cursor_icon_delete")
+        self.display_mode_cursor_icon_sprite = config.get("display_mode_cursor_icon_sprite")
+        self.display_mode_cursor_icon_hitbox = config.get("display_mode_cursor_icon_hitbox")
         
         self.display_game_file_not_exists = config.get("display_game_file_not_exists")
         self.display_game_file_exists = config.get("display_game_file_exists")
+        
+        self.display_mode_icon_files = list(map(lambda mode : f"display_{mode}.png", self.modes))
         
         self.display: Display = Display(
             config.get("display_x"),
@@ -118,9 +118,9 @@ class App:
             config.get("display_icon_size"),
             config.get("display_cursor_size"),
             [
-                self.display_mode_icon_delete,
-                self.display_mode_icon_sprite,
-                self.display_mode_icon_hitbox,
+                self.display_mode_cursor_icon_delete,
+                self.display_mode_cursor_icon_sprite,
+                self.display_mode_cursor_icon_hitbox,
             ],
             [
                 self.display_cursor_pointer,
@@ -132,6 +132,7 @@ class App:
             config.get("display_tooltip_padding"),
             self.set_tooltip_text,
             config.get("display_fill_color"),
+            config.get("display_icon_fill_color")
         )
 
         self.control : Control = Control(
@@ -166,9 +167,14 @@ class App:
                     "callback": self.browse_game_executable_file,
                     "animated_frame_suffixes": [*range(10), 0]
                 },
+                "control_player": {
+                    "callback": self.set_player_mode,
+                    "animated_frame_suffixes": [*range(5), 0]
+                },
             },
             self.set_tooltip_text,
-            config.get("control_fill_color")
+            config.get("control_fill_color"),
+            config.get("control_button_fill_color")
         )
         
         Dialog.overlay_fill_color = config.get("dialog_overlay_fill_color")
@@ -292,6 +298,9 @@ class App:
     
     def is_delete_mode(self):
         return self.mode == self.delete_mode_index
+
+    def is_player_mode(self):
+        return self.mode == self.player_mode_index
     
     def get_mode(self):
         return self.modes[self.mode]
@@ -304,6 +313,9 @@ class App:
     
     def set_delete_mode(self):
         self.set_mode(self.delete_mode_index)
+    
+    def set_player_mode(self):
+        self.set_mode(self.player_mode_index)
     
     def switch_mode(self):
         if not self.drawing_area.get_is_drawing_hitbox():
@@ -363,6 +375,9 @@ class App:
         self.map_data[self.data_type_key_dict[data_type]] = list(filter(lambda d : d["id"] != _id, self.map_data[self.data_type_key_dict[data_type]]))
         if self.drawing_area.is_empty() and self.is_delete_mode():
             self.switch_mode()
+    
+    def set_player_position(self, player_pos: Coords) -> None:
+        self.map_data["starting_position"] = player_pos
 
     def save_map_data(self):
         try:
@@ -401,6 +416,8 @@ class App:
                     data["sprites"] = []
                 if not data.get("hitboxes"):
                     data["hitboxes"] = []
+                if not data.get("starting_position"):
+                    data["starting_position"] = None
                 if data != None:
                     self.drawing_area.load_data(data)
                     self.map_data = copy.deepcopy(data)
@@ -425,7 +442,7 @@ class App:
         self.load_map_data()
 
     def request_load_map_data(self):
-        if not self.drawing_area.is_empty():
+        if not self.drawing_area.is_empty() or not self.check_pristine():
             self.set_dialog(Dialog(
                 self.screen,
                 self.i18n.translate("app.dialogs.current_design_will_be_replaced.message"),
@@ -494,6 +511,13 @@ class App:
                     "enabled": self.i18n.translate("app.controls.game_file.hint_enabled"),
                 },
             },
+            "control_player": {
+                "disabled": False,
+                "hint": {
+                    "disabled": None,
+                    "enabled": self.i18n.translate("app.controls.player.hint_enabled"),
+                },
+            },
         }
 
 
@@ -507,7 +531,7 @@ class App:
             },
             {
                 "type": "icon",
-                "icon_name": self.mode_icon_files[self.mode],
+                "icon_name": self.display_mode_icon_files[self.mode],
                 "hint": self.i18n.translate(f"app.display.mode_{self.modes[self.mode]}"),
             },
             {
@@ -546,11 +570,13 @@ class App:
                     self.is_sprite_mode(),
                     self.is_hitbox_mode(),
                     self.is_delete_mode(),
+                    self.is_player_mode(),
                     self.sprite_panel.get_sprites(),
                     self.sprite_panel.get_selected_sprite_id(),
                     self.switch_mode,
                     self.add_data,
-                    self.delete_data
+                    self.delete_data,
+                    self.set_player_position
                 )
                 
                 # LINK: #ControlUpdate

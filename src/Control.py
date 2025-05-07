@@ -14,7 +14,8 @@ class Control(SurfaceRect):
         button_size: List[int],
         icon_buttons: Dict[str, Callable],
         button_hover_callback: Callable,
-        fill_color: Optional[str] = None
+        fill_color: str,
+        button_fill_color: str
     ) -> None:
         super().__init__(x, y, width, height, screen)
         
@@ -23,6 +24,7 @@ class Control(SurfaceRect):
         self.gap = (self.rect.height - self.button_size[1]) // 2, 10
         
         self.fill_color = fill_color
+        self.button_fill_color = button_fill_color
         
         self.buttons: Dict[str, Dict[str, Union[ClickAnimatedSurface, Rect, Callable, bool]]] = {}
         for icon_name, icon_button_dict in icon_buttons.items():
@@ -97,4 +99,5 @@ class Control(SurfaceRect):
     
     def draw_button(self, button_dict: Dict[str, Union[ClickAnimatedSurface, Rect, Callable, bool]]) -> None:
         button_dict["button"].set_alpha(256 - (button_dict["disabled"] * 192))  # Add translucency
+        pygame.draw.rect(self, self.button_fill_color, button_dict["rect"], border_radius=2)
         button_dict["button"].draw(button_dict["rect"])

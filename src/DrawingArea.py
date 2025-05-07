@@ -1,3 +1,4 @@
+from os import path
 from typing import Callable, List, Optional, Tuple, Union
 from .utility import *
 from .SurfaceRect import SurfaceRect
@@ -9,6 +10,8 @@ from .ImageCache import ImageCache
 
 class DrawingArea(SurfaceRect):
     # ANCHOR - DrawingArea
+    
+    icon_size: Coords = None
     
     def __init__(
         self,
@@ -25,8 +28,21 @@ class DrawingArea(SurfaceRect):
         snap_threshold: int,
         delete_highlight_color: Color,
         scrolling_speed: int,
+        player_position_icon: str
     ) -> None:
         super().__init__(x, y, width, height, screen)
+        
+        self.player_starting_pos: Coords = None
+        self.icon_player_position: Surface = None
+        try:
+            self.icon_player_position = ImageCache().get_image(
+                path.basename(player_position_icon),
+                True,
+                self.icon_size
+            )
+        except pygame.error as e:
+            Logger.error(f"Error loading icon")
+            self.icon_player_position = None
         
         self.canvas_fill_color: Color = canvas_fill_color
         self.preview_hit_box_outline_color: Color = preview_hit_box_outline_color
@@ -216,10 +232,14 @@ class DrawingArea(SurfaceRect):
             lambda h : HitBox(*h.get("rect"), _id=h.get("id")),
             data
         ))
+    
+    def load_player_starting_position(self, data: Coords):
+        self.player_starting_pos = data
         
     def load_data(self, data: Dict[str, Union[List[SpriteData], List[HitBoxData]]]):
         self.load_sprites(data.get("sprites"))
         self.load_hitboxes(data.get("hitboxes"))
+        self.load_player_starting_position(data.get("starting_position"))
 
     def _update(self,
         absolute_mouse_pos: Coords,
@@ -227,11 +247,13 @@ class DrawingArea(SurfaceRect):
         is_sprite_mode: bool,
         is_hitbox_mode: bool,
         is_delete_mode: bool,
+        is_player_mode: bool,
         sprites: Tuple[Sprite, ...],
         selected_sprite_id: str,
         right_click_callback: Callable,
         add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
-        delete_data: Callable[[str, str], None]
+        delete_data: Callable[[str, str], None],
+        set_player_position: Callable[[Coords], None]
     ) -> None:
         # ANCHOR[id=DrawingAreaUpdate]
         self.relative_mouse_pos = self.get_relative_mouse_pos(absolute_mouse_pos)
@@ -260,6 +282,9 @@ class DrawingArea(SurfaceRect):
                         self.is_deleting = True
                         self.start_deleting_pos = self.canvas_mouse_pos
                         self.current_deleting_pos = self.canvas_mouse_pos
+                    elif is_player_mode:
+                        self.player_starting_pos = self.canvas_mouse_pos
+                        set_player_position(self.canvas_mouse_pos)
                 
                 if event.button == MouseButtons.RIGHT:
                     if is_hitbox_mode:
@@ -523,7 +548,16 @@ class DrawingArea(SurfaceRect):
             min(self.rect.width, self.canvas.get_width()) + border_radius,
             min(self.rect.height, self.canvas.get_height()) + border_radius
         ), border_radius=border_radius)
-        
+    
+    def draw_player_starting_pos(self):
+        if self.player_starting_pos:
+            self.canvas.blit(
+                self.icon_player_position,
+                (
+                    self.player_starting_pos[0] - self.icon_player_position.get_rect().width // 2,
+                    self.player_starting_pos[1] - self.icon_player_position.get_rect().height // 2,
+                )
+            )
 
     def _draw(self) -> None:
     # ANCHOR[id=DrawingAreaDraw]
@@ -533,6 +567,10 @@ class DrawingArea(SurfaceRect):
         self.draw_sprites()
         self.draw_preview_sprite()
         self.draw_hitboxes()
+        self.draw_player_starting_pos()
         self.draw_preview_selection()
         self.draw_delete_highlight()
         self.draw_canvas()
+
+# LINK #DrawingAreaUpdate
+# LINK #DrawingAreaDraw

@@ -21,7 +21,8 @@ class Display(SurfaceRect):
         font_color: Color,
         tooltip_padding: int,
         display_icon_data_hover_callback: Callable,
-        fill_color: Optional[str] = None
+        fill_color: str,
+        icon_fill_color: str
     ) -> None:
         super().__init__(x, y, width, height, screen)
         
@@ -29,6 +30,7 @@ class Display(SurfaceRect):
         self.font_color = font_color
         
         self.fill_color: Color = fill_color
+        self.icon_fill_color: Color = icon_fill_color
         
         self.cursor_icon_size: int = cursor_icon_size
         self.display_icon_size: Coords = display_icon_size
@@ -185,6 +187,12 @@ class Display(SurfaceRect):
                     d["text_surface"].get_height()
                 ))
             elif d["type"] == "icon":
+                pygame.draw.rect(self, self.icon_fill_color, (
+                    d["icon_image_rect"].x + (d["icon_image_rect"].width - d["icon_image_surface"].get_width()) // 2,
+                    (d["icon_image_rect"].height - d["icon_image_surface"].get_height()) // 2,
+                    d["icon_image_surface"].get_width(),
+                    d["icon_image_surface"].get_height()
+                ), border_radius=2)
                 self.blit(d["icon_image_surface"], (
                     d["icon_image_rect"].x + (d["icon_image_rect"].width - d["icon_image_surface"].get_width()) // 2,
                     (d["icon_image_rect"].height - d["icon_image_surface"].get_height()) // 2,

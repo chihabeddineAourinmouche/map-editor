@@ -28,6 +28,8 @@ drawing_area_delete_selection_outline_width: 1
 drawing_area_snap_threshold: 2
 drawing_area_delete_highlight_color: [255, 94, 87]
 drawing_area_scrolling_speed: 10
+drawing_area_icon_size: [64, 64]
+drawing_area_icon_player_position: drawing_area_player_position.png
 
 hitbox_color: [229, 233, 240]
 hitbox_color_theme:
@@ -47,6 +49,10 @@ display_fill_color: [57, 67, 76]
 display_fill_color_theme:
     true: [57, 67, 76]
     false: [229, 233, 240]
+display_icon_fill_color: [229, 233, 240]
+display_icon_fill_color_theme:
+    true: [229, 233, 240]
+    false: [57, 67, 76]
 display_font_size: 16
 display_icon_size: [24, 24]
 display_cursor_size: 14
@@ -60,9 +66,9 @@ display_panning_icon_src: "display_cursor_panning_light.png"
 display_panning_icon_src_theme:
     true: "display_cursor_panning_light.png"
     false: "display_cursor_panning_dark.png"
-display_mode_icon_delete: "display_delete.png"
-display_mode_icon_sprite: "display_sprite.png"
-display_mode_icon_hitbox: "display_hitbox.png"
+display_mode_cursor_icon_delete: "display_delete.png"
+display_mode_cursor_icon_sprite: "display_sprite.png"
+display_mode_cursor_icon_hitbox: "display_hitbox.png"
 display_game_file_not_exists: "display_game_file_not_exists.png"
 display_game_file_exists: "display_game_file_exists.png"
 
@@ -70,6 +76,10 @@ control_fill_color: [57, 67, 76]
 control_fill_color_theme:
     true: [57, 67, 76]
     false: [229, 233, 240]
+control_button_fill_color: [229, 233, 240]
+control_button_fill_color_theme:
+    true: [229, 233, 240]
+    false: [57, 67, 76]
 control_icon_size: [24, 24]
 
 dialog_overlay_fill_color: [50, 50, 50]
@@ -91,21 +101,23 @@ font_color: [229, 233, 240]
 font_color_theme:
     true: [229, 233, 240]
     false: [57, 67, 76]
-font_family: "Yu Gothic Regular"
+font_family: Yu Gothic Regular
 
 theme_dependent_fields:
-    - "window_fill_color"
-    - "drawing_area_canvas_fill_color"
-    - "drawing_area_canvas_grid_color"
-    - "drawing_area_preview_hit_box_outline_color"
-    - "hitbox_color"
-    - "sprite_panel_fill_color"
-    - "display_fill_color"
-    - "control_fill_color"
-    - "dialog_box_fill_color"
-    - "font_color"
-    - "display_cursor_icon_src"
-    - "display_panning_icon_src"
+    - window_fill_color
+    - drawing_area_canvas_fill_color
+    - drawing_area_canvas_grid_color
+    - drawing_area_preview_hit_box_outline_color
+    - hitbox_color
+    - sprite_panel_fill_color
+    - display_fill_color
+    - display_icon_fill_color
+    - control_fill_color
+    - control_button_fill_color
+    - dialog_box_fill_color
+    - font_color
+    - display_cursor_icon_src
+    - display_panning_icon_src
 
 dark_theme: true
 
@@ -124,17 +136,11 @@ map_output_directory: "."
 map_output_filename: "map.json"
 
 modes:
-    - "sprite"
-    - "hitbox"
-    - "delete"
-mode_hints:
-    - "Single-click to place a sprite"
-    - "Click and drag to draw a hitbox"
-    - "Single-click to delete a sprite or a hitbox or click and drag to delete multiple"
-mode_icon_files:
-    - "display_sprite.png"
-    - "display_hitbox.png"
-    - "display_delete.png"
+    - sprite
+    - hitbox
+    - delete
+    - player
+
 
 # Colors for reference
 light_purple: [112, 111, 211]
@@ -255,7 +261,7 @@ i18n:
                     just_quit_button: Just quit
                     save_first_button: Save first
                 current_design_will_be_replaced: 
-                    message: Your current level design will be replaced (but not saved)
+                    message: Your current level design will be replaced without saving
                     just_load: Just Load
                     save_first: Save First
                 map_data_sprite_mismatch:
@@ -282,6 +288,8 @@ i18n:
                 game_file:
                     hint_disabled: Can't load file
                     hint_enabled: Load a game file to be run
+                player:
+                    hint_enabled: Switch to player position mode
             display:
                 game_file_status_no_game: No game loaded
                 game_file_status_game_loaded: Game loaded
@@ -291,3 +299,5 @@ i18n:
                 mode_hitbox_hint: Click and drag to draw a hitbox
                 mode_delete: Delete mode
                 mode_delete_hint: Click once to delete a sprite or a hitbox, or click and drag to bulk delete (sprites and hitboxes)
+                mode_player: Player position mode
+                mode_player_hint: Click once to place the player's starting position
