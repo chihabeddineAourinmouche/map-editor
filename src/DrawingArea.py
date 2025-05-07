@@ -163,7 +163,10 @@ class DrawingArea(SurfaceRect):
 
     def calculate_snapping_coords(self) -> Coords:
         # Calculate canvas coordinates of the mouse (where the sprite will be placed)
-        intended_canvas_pos = self.canvas_mouse_pos
+        intended_canvas_pos = [
+            self.canvas_mouse_pos[0] - self.ghost_sprite.get_sprite_rect().width // 2,
+            self.canvas_mouse_pos[1] - self.ghost_sprite.get_sprite_rect().height // 2
+        ]
 
         # Calculate the closest grid point
         closest_grid_x = round(intended_canvas_pos[0] / self.canvas_grid_cell_size) * self.canvas_grid_cell_size
