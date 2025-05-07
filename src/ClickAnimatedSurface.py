@@ -7,7 +7,7 @@ class ClickAnimatedSurface(Surface):
         
         self.screen = screen
 
-        self.animation_frames = animated_frames
+        self.animation_frames = [*animated_frames, animated_frames[0]]
 
         # --- Initial State ---
         self.current_frame_index = 0

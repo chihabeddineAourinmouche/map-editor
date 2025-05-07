@@ -62,6 +62,7 @@ display_cursor_icon_src_theme:
     true: "display_cursor_pointer_light.png"
     false: "display_cursor_pointer_dark.png"
 display_cursor_danger_icon_src: "display_cursor_pointer_danger.png"
+display_cursor_move_src: "display_cursor_move.png"
 display_panning_icon_src: "display_cursor_panning_light.png"
 display_panning_icon_src_theme:
     true: "display_cursor_panning_light.png"
@@ -140,6 +141,7 @@ modes:
     - hitbox
     - delete
     - player
+    - move
 
 
 # Colors for reference
@@ -290,6 +292,10 @@ i18n:
                     hint_enabled: Load a game file to be run
                 player:
                     hint_enabled: Switch to player position mode
+                move:
+                    hint_disabled_no_sprites_to_move: There are no sprites yet to move
+                    hint_disabled_already_in_move_mode: Already in move mode
+                    hint_enabled: Switch to moving mode
             display:
                 game_file_status_no_game: No game loaded
                 game_file_status_game_loaded: Game loaded
@@ -301,3 +307,5 @@ i18n:
                 mode_delete_hint: Click once to delete a sprite or a hitbox, or click and drag to bulk delete (sprites and hitboxes)
                 mode_player: Player position mode
                 mode_player_hint: Click once to place the player's starting position
+                mode_move: Moving mode
+                mode_move_hint: Click, hold, and drag to move a sprite around the canvas

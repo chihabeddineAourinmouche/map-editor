@@ -93,12 +93,13 @@ class App:
         )
         
         self.modes = config.get("modes")
-        self.sprite_mode_index, self.hitbox_mode_index, self.delete_mode_index, self.player_mode_index = range(len(self.modes))
+        self.sprite_mode_index, self.hitbox_mode_index, self.delete_mode_index, self.player_mode_index, self.move_mode_index = range(len(self.modes))
         self.mode = self.sprite_mode_index if len(self.sprite_panel.get_sprites()) else self.hitbox_mode_index
         
         self.display_cursor_pointer = config.get("display_cursor_icon_src")
         self.display_cursor_pointer_danger = config.get("display_cursor_danger_icon_src")
         self.display_cursor_panning = config.get("display_panning_icon_src")
+        self.display_cursor_move = config.get("display_cursor_move_src")
         
         self.display_mode_cursor_icon_delete = config.get("display_mode_cursor_icon_delete")
         self.display_mode_cursor_icon_sprite = config.get("display_mode_cursor_icon_sprite")
@@ -126,6 +127,7 @@ class App:
                 self.display_cursor_pointer,
                 self.display_cursor_pointer_danger,
                 self.display_cursor_panning,
+                self.display_cursor_move,
             ],
             config.get("display_font_size"),
             config.get("font_color"),
@@ -145,31 +147,35 @@ class App:
             {
                 "control_save": {
                     "callback": self.save_map_data,
-                    "animated_frame_suffixes": [*range(12), 0]
+                    "animated_frame_suffixes": range(12)
                 },
                 "control_load": {
                     "callback": self.request_load_map_data,
-                    "animated_frame_suffixes": [*range(5), 0]
+                    "animated_frame_suffixes": range(5)
                 },
                 "control_delete": {
                     "callback": self.set_delete_mode,
-                    "animated_frame_suffixes": [*range(8), 0]
+                    "animated_frame_suffixes": range(8)
                 },
                 "control_run": {
                     "callback": self.run_game,
-                    "animated_frame_suffixes": [*range(6), 0]
+                    "animated_frame_suffixes": range(6)
                 },
                 "control_stop": {
                     "callback": self.game_runner.close_game,
-                    "animated_frame_suffixes": [*range(7), 0]
+                    "animated_frame_suffixes": range(7)
                 },
                 "control_game_file": {
                     "callback": self.browse_game_executable_file,
-                    "animated_frame_suffixes": [*range(10), 0]
+                    "animated_frame_suffixes": range(10)
                 },
                 "control_player": {
                     "callback": self.set_player_mode,
-                    "animated_frame_suffixes": [*range(5), 0]
+                    "animated_frame_suffixes": range(5)
+                },
+                "control_move": {
+                    "callback": self.set_move_mode,
+                    "animated_frame_suffixes": range(9)
                 },
             },
             self.set_tooltip_text,
@@ -301,6 +307,9 @@ class App:
 
     def is_player_mode(self):
         return self.mode == self.player_mode_index
+
+    def is_move_mode(self):
+        return self.mode == self.move_mode_index
     
     def get_mode(self):
         return self.modes[self.mode]
@@ -317,12 +326,21 @@ class App:
     def set_player_mode(self):
         self.set_mode(self.player_mode_index)
     
+    def set_move_mode(self):
+        if self.drawing_area.has_sprites():
+            self.set_mode(self.move_mode_index)
+        else:
+            self.switch_mode()
+    
     def switch_mode(self):
         if not self.drawing_area.get_is_drawing_hitbox():
             self.set_mode()
+            # TODO - Write this better as if () or () or ()...
             if self.is_delete_mode() and (not len(self.map_data["sprites"]) and not len(self.map_data["hitboxes"])):
                 self.set_mode()
             if self.is_sprite_mode() and not len(self.sprite_panel.get_sprites()):
+                self.set_mode()
+            if self.is_move_mode() and not self.drawing_area.has_sprites():
                 self.set_mode()
 
 
@@ -378,6 +396,12 @@ class App:
     
     def set_player_position(self, player_pos: Coords) -> None:
         self.map_data["starting_position"] = player_pos
+    
+    def move_sprite(self, _id: str, pos: Coords) -> None:
+        list_containing_sprite_data_to_move: List[Sprite] = list(filter(lambda sprite_data : sprite_data.get("id") == _id, self.map_data["sprites"]))
+        if len(list_containing_sprite_data_to_move):
+            sprite: Sprite = list_containing_sprite_data_to_move[0]
+            sprite["coordinates"] = pos
 
     def save_map_data(self):
         try:
@@ -518,6 +542,13 @@ class App:
                     "enabled": self.i18n.translate("app.controls.player.hint_enabled"),
                 },
             },
+            "control_move": {
+                "disabled": not self.drawing_area.has_sprites() or self.is_move_mode(),
+                "hint": {
+                    "disabled": self.i18n.translate("app.controls.move.hint_disabled_no_sprites_to_move") if not self.drawing_area.has_sprites() else self.i18n.translate("app.controls.move.hint_disabled_already_in_move_mode"),
+                    "enabled": self.i18n.translate("app.controls.move.hint_enabled"),
+                },
+            },
         }
 
 
@@ -571,12 +602,14 @@ class App:
                     self.is_hitbox_mode(),
                     self.is_delete_mode(),
                     self.is_player_mode(),
+                    self.is_move_mode(),
                     self.sprite_panel.get_sprites(),
                     self.sprite_panel.get_selected_sprite_id(),
                     self.switch_mode,
                     self.add_data,
                     self.delete_data,
-                    self.set_player_position
+                    self.set_player_position,
+                    self.move_sprite
                 )
                 
                 # LINK: #ControlUpdate
@@ -593,6 +626,7 @@ class App:
                         else self.display_cursor_pointer_danger if self.is_delete_mode() 
                             and self.drawing_area.get_is_hovered()
                             and not self.dialog
+                        else self.display_cursor_move if self.is_move_mode()
                         else self.display_cursor_pointer,
                 },
                 self.get_display_data(),
