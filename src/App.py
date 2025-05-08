@@ -56,6 +56,8 @@ class App:
         self.icon_dir: str = config.get("icon_directory")
         self.image_cache: ImageCache = ImageCache([self.sprite_dir, self.icon_dir])
         
+        pygame.display.set_icon(self.image_cache.get_image(config.get("window_icon")))
+        
         HitBox.color = config.get("hitbox_color")
 
         Sprite.selection_color = config.get("sprite_selection_color")
@@ -538,9 +540,9 @@ class App:
                 },
             },
             "control_player": {
-                "disabled": False,
+                "disabled": self.is_player_mode(),
                 "hint": {
-                    "disabled": None,
+                    "disabled": self.i18n.translate("app.controls.player.hint_disabled"),
                     "enabled": self.i18n.translate("app.controls.player.hint_enabled"),
                 },
             },
@@ -574,7 +576,7 @@ class App:
             },
             {
                 "type": "text",
-                "data": str(self.drawing_area.get_mouse_position_on_canvas()),
+                "data": str(self.drawing_area.calculate_snapping_coords() if self.is_sprite_mode() else self.drawing_area.get_mouse_position_on_canvas()),
                 "hint": "x, y",
             },
         ]

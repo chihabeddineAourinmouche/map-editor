@@ -158,6 +158,6 @@ if __name__ == "__main__":
     if not config:
         Logger.error("Error loading configuration")
         exit(1)
-        
+    
     app = App(config)
     app.run()

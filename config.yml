@@ -1,6 +1,6 @@
-#  Dimensions
 window_width: 1600
 window_height: 900
+window_icon: window_icon.png
 
 window_fill_color: [57, 67, 76]
 window_fill_color_theme: 
@@ -294,6 +294,7 @@ i18n:
                     hint_disabled: Can't load file
                     hint_enabled: Load a game file to be run
                 player:
+                    hint_disabled: Already in player mode
                     hint_enabled: Switch to player position mode
                 move:
                     hint_disabled_no_sprites_to_move: There are no sprites yet to move
