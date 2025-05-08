@@ -97,18 +97,30 @@ def get_resource_path(relative_path):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
 
-def load_yaml_to_dict():
-    config_file_name = "config.yml"
-    config_path = get_resource_path(config_file_name)
+def load_yaml_to_dict(filename: str):
+    config_path = get_resource_path(filename)
     try:
         with open(config_path, 'r', encoding='utf8') as f:
             return yaml.safe_load(f)
     except FileNotFoundError:
-        Logger.error(f"Error: {config_file_name} not found at {config_path}")
+        Logger.error(f"Error: {filename} not found at {config_path}")
         return None
     except yaml.YAMLError as e:
-        Logger.error(f"Error parsing config.yml: {e}")
+        Logger.error(f"Error parsing {filename}: {e}")
         return None
+
+def save_dict_to_yaml(data: dict, filename: str):
+    try:
+        with open(filename, "w", encoding="utf-8") as file:
+            yaml.dump(data, file, default_flow_style=False)
+        Logger.success(f"Dictionary successfully saved to {filename}")
+
+    except IOError as e:
+        Logger.error(f"Error writing file {filename}: {e}")
+    except yaml.YAMLError as e:
+        Logger.error(f"Error dumping YAML data: {e}")
+    except Exception as e:
+        Logger.error(f"An unexpected error occurred: {e}")
 
 def save_language_preference(language, filename="temp_language.txt"):
     try:

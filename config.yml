@@ -134,7 +134,8 @@ font_file_name:
     Chinese: "Chinese-NotoSans-Light.ttf"
 sprite_directory: "."
 map_output_directory: "."
-map_output_filename: "map.json"
+map_output_filename: map.json
+user_config_filename: user-config.yml
 
 modes:
     - sprite
