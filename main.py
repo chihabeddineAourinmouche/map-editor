@@ -89,7 +89,8 @@ def set_user_defined_fields(configYML: Dict, config: Dict, i18n: I18n):
     for field in ui_user_defined_fields:
         config[field] = user_config.get(field) if user_config.get(field) != None else config.get(field)
     
-    save_dict_to_yaml(config, config.get("user_config_filename"))
+    absolute_user_config_file_path = path.join(os.path.normpath(configYML.get("user_config_directory")), configYML.get("user_config_filename"))
+    save_dict_to_yaml(config, absolute_user_config_file_path)
 
 def bundle_paths(config: Dict, bundle_dir: str):
     for field in config.get("path_fields", []):
@@ -105,10 +106,7 @@ if __name__ == "__main__":
     
     # Load config file
     config_file_name: str = "config.yml"
-    configYML: Dict = load_yaml_to_dict(config_file_name)
-    
-    user_config_filename = configYML.get("user_config_filename")
-    user_config = load_yaml_to_dict(user_config_filename)
+    configYML: Dict = load_internal_yaml_to_dict(config_file_name)
     
     config: Dict = configYML
     
@@ -122,33 +120,35 @@ if __name__ == "__main__":
     """
     i18n: I18n = I18n(config.get("language"), config.get("i18n"))
     
+    absolute_user_config_file_path = path.join(os.path.normpath(configYML.get("user_config_directory")), configYML.get("user_config_filename"))
+    user_config = load_yaml_to_dict(absolute_user_config_file_path)
+    
     """
         Check if there already is user_config file.
         - if so, load user config from user config file.
         - else, take user config through UI.
     """
     if not user_config:
-        print("NO USER CONFIG YET")
         """
             Init configUI to request user-defined
             config and override default config.
             I define here the fields I would the
             user to be able to change through the UI.
         """
-        
         set_user_defined_fields(configYML, config, i18n)
     else:
         config = user_config
     
-    """
-        Adjust paths for bundling
-    """
-    bundle_paths(config, bundle_dir)
     
     for field in config.get("theme_dependent_fields", []):
         config[field] = config[f"{field}_theme"][config.get("dark_theme", True)]
     
     set_config_ui_element_dimensions(config)
+    
+    """
+        Adjust paths for bundling
+    """
+    bundle_paths(config, bundle_dir)
     
     FontManager(
         font_path=path.join(config.get("font_directory"), config.get("font_file_name").get(config.get("language"))),

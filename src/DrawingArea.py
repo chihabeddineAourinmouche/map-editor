@@ -271,7 +271,6 @@ class DrawingArea(SurfaceRect):
     
     def load_canvas_size(self, data: Coords):
         if data != None and data[0] != self.canvas.get_rect().width and data[1] != self.canvas.get_rect().height:
-            print("RESIZING CANVAS")
             self.canvas = self.resize_canvas(size=data)
         
     def load_data(self, data: Dict[str, Union[List[SpriteData], List[HitBoxData]]]):

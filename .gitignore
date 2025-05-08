@@ -3,7 +3,7 @@ map.json
 another_map.json
 logs.log
 temp_language.txt
-user-config.yml
+user_config.yml
 Map-Editor
 .vscode
 .venv

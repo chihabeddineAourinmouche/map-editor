@@ -167,13 +167,13 @@ dark_orange: [205, 97, 51]
 light_yellow: [255, 218, 121]
 dark_yellow: [255, 177, 66]
 
+# Paths to bundle
 path_fields:
-    - "game_runner_game_executable_path"
-    - "icon_directory"
-    - "font_directory"
-    - "sprite_directory"
-    - "map_output_directory"
-    - "language_file_directory"
+    - game_runner_game_executable_path
+    - icon_directory
+    - font_directory
+    - sprite_directory
+    - map_output_directory
 
 language: "English"
 language_config_field:
@@ -184,6 +184,8 @@ language_config_field:
     default_value: English
 language_file_name: temp_language.txt
 language_file_directory: "."
+user_config_filename: user_config.yml
+user_config_directory: "."
 
 ui_user_definable_fields:
     window_width:

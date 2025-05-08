@@ -97,13 +97,30 @@ def get_resource_path(relative_path):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
 
-def load_yaml_to_dict(filename: str):
+def load_internal_yaml_to_dict(filename: str):
+    """
+        Loads internal (Bundled) paths
+    """
     config_path = get_resource_path(filename)
     try:
         with open(config_path, 'r', encoding='utf8') as f:
             return yaml.safe_load(f)
     except FileNotFoundError:
         Logger.error(f"Error: {filename} not found at {config_path}")
+        return None
+    except yaml.YAMLError as e:
+        Logger.error(f"Error parsing {filename}: {e}")
+        return None
+
+def load_yaml_to_dict(filename: str):
+    """
+        Loads unbundled apths
+    """
+    try:
+        with open(filename, 'r', encoding='utf8') as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        Logger.error(f"Error: {filename} not found at {filename}")
         return None
     except yaml.YAMLError as e:
         Logger.error(f"Error parsing {filename}: {e}")
