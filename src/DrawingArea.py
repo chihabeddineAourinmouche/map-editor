@@ -245,7 +245,15 @@ class DrawingArea(SurfaceRect):
             self.panning_offset[1] = 0
         else:
             self.panning_offset[1] = max(viewport.height - canvas_rect.height, min(0, self.panning_offset[1]))
-
+    
+    def resize_canvas(self, amount: Optional[Coords] = None, size: Optional[Coords] = None) -> Surface:
+        new_canvas: Surface = Surface((
+            self.canvas.get_rect().width + amount[0],
+            self.canvas.get_rect().height + amount[1]
+        ) if size == None else size, pygame.SRCALPHA)
+        new_canvas.blit(self.canvas, (0, 0))
+        return new_canvas
+    
     def load_sprites(self, data: List[SpriteData]):
         self.sprites = list(map(
         lambda s : Sprite(*s.get("coordinates"), self.canvas, ImageCache().get_image(s.get("file_name")), s.get("file_name"), _id=s.get("id")),
@@ -260,8 +268,14 @@ class DrawingArea(SurfaceRect):
     
     def load_player_starting_position(self, data: Coords):
         self.player_starting_pos = data
+    
+    def load_canvas_size(self, data: Coords):
+        if data != None and data[0] != self.canvas.get_rect().width and data[1] != self.canvas.get_rect().height:
+            print("RESIZING CANVAS")
+            self.canvas = self.resize_canvas(size=data)
         
     def load_data(self, data: Dict[str, Union[List[SpriteData], List[HitBoxData]]]):
+        self.load_canvas_size(data.get("world_size"))
         self.load_sprites(data.get("sprites"))
         self.load_hitboxes(data.get("hitboxes"))
         self.load_player_starting_position(data.get("starting_position"))

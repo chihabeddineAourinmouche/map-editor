@@ -442,6 +442,8 @@ class App:
                     data["hitboxes"] = []
                 if not data.get("starting_position"):
                     data["starting_position"] = None
+                if not data.get("world_size"):
+                    data["world_size"] = None
                 if data != None:
                     self.drawing_area.load_data(data)
                     self.map_data = copy.deepcopy(data)
