@@ -755,7 +755,7 @@ class App:
         # Always draw display cursor on top of display tooltip and draw both on top of all other elements
         # if self.tooltip_text:# TODO - Maybe remove for good. This causes the tooltip, while hovering Display in fixed_update, to flicker
         self.display.draw_tooltip()
-        if not self.is_sprite_mode():
+        if not (self.is_sprite_mode() and self.drawing_area.get_is_hovered()):
             self.display.draw_cursor()
 
         pygame.display.flip()
