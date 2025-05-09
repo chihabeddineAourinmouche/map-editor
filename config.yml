@@ -24,9 +24,11 @@ drawing_area_preview_hit_box_outline_color_theme:
     false: [57, 67, 76]
 drawing_area_delete_selection_outline_color: [255, 94, 87]
 drawing_area_preview_hit_box_outline_width: 1
-drawing_area_delete_selection_outline_width: 1
+drawing_area_delete_selection_outline_width: 3
+drawing_area_move_selection_outline_width: 3
 drawing_area_snap_threshold: 2
 drawing_area_delete_highlight_color: [255, 94, 87]
+drawing_area_move_highlight_color: [253, 185, 36]
 drawing_area_scrolling_speed: 10
 drawing_area_icon_size: [64, 64]
 drawing_area_icon_player_position: drawing_area_player_position.png
@@ -63,6 +65,7 @@ display_cursor_icon_src_theme:
     false: "display_cursor_pointer_dark.png"
 display_cursor_danger_icon_src: "display_cursor_pointer_danger.png"
 display_cursor_move_src: "display_cursor_move.png"
+display_cursor_player_src: "display_cursor_pointer_blue.png"
 display_panning_icon_src: "display_cursor_panning_light.png"
 display_panning_icon_src_theme:
     true: "display_cursor_panning_light.png"

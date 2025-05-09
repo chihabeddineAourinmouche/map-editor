@@ -34,6 +34,10 @@ class KeyboardKeys:
     W = pygame.K_w
     R = pygame.K_r
     L = pygame.K_l
+    H = pygame.K_h
+    D = pygame.K_d
+    P = pygame.K_p
+    M = pygame.K_m
 
 def load_json_to_dict(filepath: str) -> Dict:
     if not os.path.exists(filepath):

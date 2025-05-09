@@ -20,7 +20,6 @@ class Display(SurfaceRect):
         font_size: int,
         font_color: Color,
         tooltip_padding: int,
-        display_icon_data_hover_callback: Callable,
         fill_color: str,
         icon_fill_color: str
     ) -> None:
@@ -62,7 +61,6 @@ class Display(SurfaceRect):
         self.tooltip_rect: Rect = None
         self.tooltip_surface: Surface = None
         
-        self.display_icon_data_hover_callback: Callable = display_icon_data_hover_callback
         
         self.display_data: List[Dict[str, Union[str, int, float, bool]]] = []
         
@@ -113,7 +111,6 @@ class Display(SurfaceRect):
 
     def _update(self,
         absolute_mouse_pos: Coords,
-        event: Event,
         icons: Tuple[str, str],
         data: List[Dict[str, Union[str, int, float, bool]]],
         tooltip_text: Optional[str] = None
@@ -149,7 +146,6 @@ class Display(SurfaceRect):
                 d["text_rect"] = text_rect
                 if self.get_is_data_hovered(text_rect):
                     hint: str = d["hint"]
-                    self.display_icon_data_hover_callback(hint)
                     self.set_tooltip_surface_rect(hint, absolute_mouse_pos)
                 # pygame.draw.rect(self, (0, 255, 0), text_rect, 2) # FIXME - DEBUG ONLY
             elif d["type"] == "icon":
@@ -165,7 +161,6 @@ class Display(SurfaceRect):
                 d["icon_image_rect"] = icon_image_rect
                 if self.get_is_data_hovered(icon_image_rect):
                     hint: str = d["hint"]
-                    self.display_icon_data_hover_callback(hint)
                     self.set_tooltip_surface_rect(hint, absolute_mouse_pos)
 
     def draw(self) -> None:

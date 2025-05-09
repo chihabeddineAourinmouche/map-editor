@@ -51,7 +51,9 @@ class Control(SurfaceRect):
         return self.rect.collidepoint(absolute_mouse_pos)
 
     def get_is_button_hovered(self, button_filename: str) -> bool:
-        return self.buttons[button_filename]["rect"].collidepoint(self.relative_mouse_pos)
+        if self.relative_mouse_pos != None:
+            return self.buttons[button_filename]["rect"].collidepoint(self.relative_mouse_pos)
+        return False
 
     def get_relative_mouse_pos(self, absolute_mouse_pos: Coords) -> Coords:
         return [absolute_mouse_pos[0] - self.rect.x, absolute_mouse_pos[1] - self.rect.y]
@@ -73,13 +75,6 @@ class Control(SurfaceRect):
                                 callback: Callable = button_dict["callback"]
                                 button_dict["button"].start_animation(callback)
                 
-            if self.get_is_button_hovered(button_name):
-                self.button_hover_callback(
-                    {
-                        True: buttons[button_name]["hint"]["disabled"],
-                        False: buttons[button_name]["hint"]["enabled"]
-                    }[button_dict["disabled"]]
-                )
     
     # ANCHOR[id=ControlFixedUpdate]
     def fixed_update(self,
@@ -88,6 +83,13 @@ class Control(SurfaceRect):
         for button_name, button_dict in self.buttons.items():
             button_dict["disabled"] = buttons.get(button_name) != None and buttons.get(button_name)["disabled"] == True
             button_dict["button"].update()
+            if self.get_is_button_hovered(button_name):
+                self.button_hover_callback(
+                    {
+                        True: buttons[button_name]["hint"]["disabled"],
+                        False: buttons[button_name]["hint"]["enabled"]
+                    }[button_dict["disabled"]]
+                )
 
     # ANCHOR[id=ControlDraw]
     def _draw(self) -> None:

@@ -76,10 +76,12 @@ class App:
             config.get("drawing_area_delete_selection_outline_color"),
             config.get("drawing_area_preview_hit_box_outline_width"),
             config.get("drawing_area_delete_selection_outline_width"),
+            config.get("drawing_area_move_selection_outline_width"),
             config.get("drawing_area_canvas_grid_cell_size"),
             config.get("drawing_area_canvas_grid_color"),
             config.get("drawing_area_snap_threshold"),
             config.get("drawing_area_delete_highlight_color"),
+            config.get("drawing_area_move_highlight_color"),
             config.get("drawing_area_scrolling_speed"),
             config.get("drawing_area_icon_player_position")
         )
@@ -102,6 +104,7 @@ class App:
         self.display_cursor_pointer_danger = config.get("display_cursor_danger_icon_src")
         self.display_cursor_panning = config.get("display_panning_icon_src")
         self.display_cursor_move = config.get("display_cursor_move_src")
+        self.display_cursor_player = config.get("display_cursor_player_src")
         
         self.display_mode_cursor_icon_delete = config.get("display_mode_cursor_icon_delete")
         self.display_mode_cursor_icon_sprite = config.get("display_mode_cursor_icon_sprite")
@@ -130,11 +133,11 @@ class App:
                 self.display_cursor_pointer_danger,
                 self.display_cursor_panning,
                 self.display_cursor_move,
+                self.display_cursor_player
             ],
             config.get("display_font_size"),
             config.get("font_color"),
             config.get("display_tooltip_padding"),
-            self.set_tooltip_text,
             config.get("display_fill_color"),
             config.get("display_icon_fill_color")
         )
@@ -317,22 +320,24 @@ class App:
         return self.modes[self.mode]
 
     def set_sprite_mode(self):
-        if len(self.sprite_panel.get_sprites()):
+        if len(self.sprite_panel.get_sprites()) and not self.is_sprite_mode():
             self.set_mode(self.sprite_mode_index)
-        else:
-            self.switch_mode()
     
     def set_delete_mode(self):
-        self.set_mode(self.delete_mode_index)
+        if not self.drawing_area.is_empty() and not self.is_delete_mode():
+            self.set_mode(self.delete_mode_index)
     
+    def set_hitbox_mode(self):
+        if not self.is_hitbox_mode():
+            self.set_mode(self.hitbox_mode_index)
+
     def set_player_mode(self):
-        self.set_mode(self.player_mode_index)
+        if not self.is_player_mode():
+            self.set_mode(self.player_mode_index)
     
     def set_move_mode(self):
-        if self.drawing_area.has_sprites():
+        if self.drawing_area.has_sprites() and not self.is_move_mode():
             self.set_mode(self.move_mode_index)
-        else:
-            self.switch_mode()
     
     def switch_mode(self):
         if not self.drawing_area.get_is_drawing_hitbox():
@@ -621,21 +626,6 @@ class App:
                     event,
                     self.get_control_button_update_data()
                 )
-                
-            # LINK: #DisplayUpdate
-            self.display.update(
-                event,
-                {
-                    "cursor": self.display_cursor_panning if self.drawing_area.get_is_panning()
-                        else self.display_cursor_pointer_danger if self.is_delete_mode() 
-                            and self.drawing_area.get_is_hovered()
-                            and not self.dialog
-                        else self.display_cursor_move if self.is_move_mode()
-                        else self.display_cursor_pointer,
-                },
-                self.get_display_data(),
-                self.tooltip_text
-            )
             
             if self.run_game_requested and not self.dialog: # Check if requested AND dialog is closed
                 self.execute_run_game()
@@ -667,15 +657,48 @@ class App:
                     # TODO[id=DEBUG]
                     elif event.key == KeyboardKeys.SPACE:
                         self.stop_running()
+                else:
+                    if event.key == KeyboardKeys.S:
+                        self.set_sprite_mode()
+                    elif event.key == KeyboardKeys.H:
+                        self.set_hitbox_mode()
+                    elif event.key == KeyboardKeys.D:
+                        self.set_delete_mode()
+                    elif event.key == KeyboardKeys.P:
+                        self.set_player_mode()
+                    elif event.key == KeyboardKeys.M:
+                        self.set_move_mode()
 
                 # FIXME - Keeping this for DEBUG
                 if event.key == KeyboardKeys.SPACE:
                     pass
-    
+                
+
     def fixed_update(self):
         # ANCHOR[id=AppFixedUpdate]
-        self.drawing_area.fixed_update()
+        self.drawing_area.fixed_update(
+            self.is_delete_mode(),
+            self.is_move_mode()
+        )
         self.control.fixed_update(self.get_control_button_update_data())
+        # LINK: #DisplayUpdate
+        self.display.update(
+            {
+                "cursor": self.display_cursor_panning if self.drawing_area.get_is_panning()
+                    else self.display_cursor_pointer_danger if self.is_delete_mode() 
+                        and self.drawing_area.get_is_hovered()
+                        and not self.dialog
+                    else self.display_cursor_move if self.is_move_mode()
+                        and self.drawing_area.get_is_hovered()
+                        and not self.dialog
+                    else self.display_cursor_player if self.is_player_mode()
+                        and self.drawing_area.get_is_hovered()
+                        and not self.dialog
+                    else self.display_cursor_pointer,
+            },
+            self.get_display_data(),
+            self.tooltip_text
+        )
 
     def draw(self) -> None:
         # ANCHOR[id=AppDraw]
@@ -696,8 +719,8 @@ class App:
             self.dialog.draw()
         
         # Always draw display cursor on top of display tooltip and draw both on top of all other elements
-        if self.tooltip_text:
-            self.display.draw_tooltip()
+        # if self.tooltip_text:# TODO - Maybe remove for good. This causes the tooltip, while hovering Display in fixed_update, to flicker
+        self.display.draw_tooltip()
         self.display.draw_cursor()
 
         pygame.display.flip()

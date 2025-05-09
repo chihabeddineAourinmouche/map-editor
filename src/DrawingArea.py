@@ -23,10 +23,12 @@ class DrawingArea(SurfaceRect):
         delete_selection_outline_color: Color,
         preview_hit_box_outline_width: int,
         delete_selection_outline_width: int,
+        move_selection_outline_width: int,
         canvas_grid_cell_size: int,
         canvas_grid_color: Color,
         snap_threshold: int,
         delete_highlight_color: Color,
+        move_highlight_color: Color,
         scrolling_speed: int,
         player_position_icon: str
     ) -> None:
@@ -73,6 +75,10 @@ class DrawingArea(SurfaceRect):
         self.delete_highlight_rects: List[Rect] = []
         self.delete_highlight_color: Color = delete_highlight_color
         
+        self.move_selection_outline_width: int = move_selection_outline_width
+        self.move_highlight_color: Color = move_highlight_color
+        self.move_highlight_rect: Rect = None
+        
         self.hitboxes: List[HitBox] = []
         
         self.start_hitbox_drawing_pos: Coords = None
@@ -97,21 +103,21 @@ class DrawingArea(SurfaceRect):
     def is_empty(self):
         return len(self.sprites) + len(self.hitboxes) == 0
     
-    def get_sprite_by_id(self, _id) -> Sprite:
+    def get_sprite_by_id(self, _id) -> Union[Sprite, None]:
         sprites: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == _id, self.sprites))
         return sprites[0] if len(sprites) else None
     
-    def get_sprite_at(self) -> Sprite:
+    def get_sprite_at(self) -> Union[Sprite, None]:
         sprites = list(filter(lambda s : s.get_sprite_rect(s.get_sprite_rect().topleft).collidepoint(self.canvas_mouse_pos), reversed(self.sprites)))
         if len(sprites):
             return sprites[0]
         return None
     
-    def get_sprite_id_at(self) -> str:
+    def get_sprite_id_at(self) -> Union[str, None]:
         sprite: Sprite = self.get_sprite_at()
         return sprite.get_id() if sprite else None
     
-    def get_hitbox_at(self) -> HitBox:
+    def get_hitbox_at(self) -> Union[HitBox, None]:
         hitboxes = list(filter(lambda h : h.get_rect().collidepoint(self.canvas_mouse_pos), reversed(self.hitboxes)))
         if len(hitboxes):
             return hitboxes[0]
@@ -138,7 +144,7 @@ class DrawingArea(SurfaceRect):
             *self.rect.size
         )
 
-    def get_hitbox_id_at(self) -> str:
+    def get_hitbox_id_at(self) -> Union[str, None]:
         hitbox: HitBox = self.get_hitbox_at()
         return hitbox.get_id() if hitbox else None
 
@@ -165,6 +171,7 @@ class DrawingArea(SurfaceRect):
         self.current_moving_pos = None
         self.start_moving_pos = None
         self.moving_sprite_id = None
+        self.move_highlight_rect = None
     
     def get_is_drawing_hitbox(self) -> bool:
         return self.is_drawing_hitbox
@@ -185,35 +192,39 @@ class DrawingArea(SurfaceRect):
 
     def calculate_snapping_coords(self) -> Coords:
         # Calculate canvas coordinates of the mouse (where the sprite will be placed)
-        intended_canvas_pos = [
-            self.canvas_mouse_pos[0] - self.ghost_sprite.get_sprite_rect().width // 2,
-            self.canvas_mouse_pos[1] - self.ghost_sprite.get_sprite_rect().height // 2
-        ]
+        if self.ghost_sprite != None:
+            intended_canvas_pos = [
+                self.canvas_mouse_pos[0] - self.ghost_sprite.get_sprite_rect().width // 2,
+                self.canvas_mouse_pos[1] - self.ghost_sprite.get_sprite_rect().height // 2
+            ]
 
-        # Calculate the closest grid point
-        closest_grid_x = round(intended_canvas_pos[0] / self.canvas_grid_cell_size) * self.canvas_grid_cell_size
-        closest_grid_y = round(intended_canvas_pos[1] / self.canvas_grid_cell_size) * self.canvas_grid_cell_size
+            # Calculate the closest grid point
+            closest_grid_x = round(intended_canvas_pos[0] / self.canvas_grid_cell_size) * self.canvas_grid_cell_size
+            closest_grid_y = round(intended_canvas_pos[1] / self.canvas_grid_cell_size) * self.canvas_grid_cell_size
 
-        # Calculate the distance to the closest grid point
-        distance_x = abs(intended_canvas_pos[0] - closest_grid_x)
-        distance_y = abs(intended_canvas_pos[1] - closest_grid_y)
+            # Calculate the distance to the closest grid point
+            distance_x = abs(intended_canvas_pos[0] - closest_grid_x)
+            distance_y = abs(intended_canvas_pos[1] - closest_grid_y)
 
-        # Snap to grid if within the threshold
-        if distance_x <= self.snap_threshold:
-            final_canvas_x = closest_grid_x
-        else:
-            final_canvas_x = intended_canvas_pos[0]
-            
-        if distance_y <= self.snap_threshold:
-            final_canvas_y = closest_grid_y
-        else:
-            final_canvas_y = intended_canvas_pos[1]
+            # Snap to grid if within the threshold
+            if distance_x <= self.snap_threshold:
+                final_canvas_x = closest_grid_x
+            else:
+                final_canvas_x = intended_canvas_pos[0]
+                
+            if distance_y <= self.snap_threshold:
+                final_canvas_y = closest_grid_y
+            else:
+                final_canvas_y = intended_canvas_pos[1]
 
-        # Convert the final canvas position back to screen coordinates for add_sprite and return
-        return [final_canvas_x, final_canvas_y]
+            # Convert the final canvas position back to screen coordinates for add_sprite and return
+            return [final_canvas_x, final_canvas_y]
+        return self.canvas_mouse_pos
 
     def get_mouse_position_on_canvas(self) -> Coords:
-        return [self.relative_mouse_pos[0] - self.panning_offset[0], self.relative_mouse_pos[1] - self.panning_offset[1]]
+        if self.relative_mouse_pos != None:
+            return [self.relative_mouse_pos[0] - self.panning_offset[0], self.relative_mouse_pos[1] - self.panning_offset[1]]
+        return [0, 0]
 
     def get_relative_mouse_pos(self, absolute_mouse_pos: Coords) -> Coords:
         return [absolute_mouse_pos[0] - self.rect.topleft[0], absolute_mouse_pos[1] - self.rect.topleft[1]]
@@ -497,11 +508,18 @@ class DrawingArea(SurfaceRect):
                     self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
             elif is_move_mode:
                 if self.is_moving and self.start_moving_pos:
+                    self.move_highlight_rect = None
                     list_containing_sprite_to_move: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == self.moving_sprite_id, self.sprites))
                     if len(list_containing_sprite_to_move):
                         self.current_moving_pos = self.calculate_snapping_coords()
                         list_containing_sprite_to_move[0].set_top_left(self.current_moving_pos)
-
+                elif not self.is_moving:
+                    sprite_pointed_at: Union[Sprite, None] = self.get_sprite_at()
+                    if sprite_pointed_at != None:
+                        self.move_highlight_rect = sprite_pointed_at.get_sprite_rect(sprite_pointed_at.topleft)
+                    else:
+                        self.move_highlight_rect = None
+            
             if self.is_panning:
                 if self.panning_start_pos:
                     delta = [self.relative_mouse_pos[0] - self.panning_start_pos[0], self.relative_mouse_pos[1] - self.panning_start_pos[1]]
@@ -523,7 +541,14 @@ class DrawingArea(SurfaceRect):
         if not self.get_is_hovered(True) or not is_sprite_mode or self.is_panning:
             self.display_ghost_sprite = False
     
-    def fixed_update(self):
+    def fixed_update(self,
+        is_delete_mode: bool,
+        is_move_mode: bool
+    ):
+        if not is_move_mode:
+            self.interrupt_moving_sprite()
+        if not is_delete_mode:
+            self.interrupt_deleting()
         absolute_mouse_pos: Coords = pygame.mouse.get_pos()
         direction_x: int = None
         # [dx,dy]=[cx−sx,cy−sy]
@@ -606,10 +631,28 @@ class DrawingArea(SurfaceRect):
     def draw_delete_highlight(self):
         if self.hitbox_preview_delete_selection_rect:
             for rect in self.delete_highlight_rects:
-                pygame.draw.rect(self.canvas, self.delete_highlight_color, rect, 2)
+                pygame.draw.rect(self.canvas,
+                    self.delete_highlight_color,
+                    rect,
+                    self.delete_selection_outline_width
+                )
 
         if self.delete_highlight_rect:
-            pygame.draw.rect(self.canvas, self.delete_highlight_color, self.delete_highlight_rect, self.delete_selection_outline_width)
+            pygame.draw.rect(
+                self.canvas,
+                self.delete_highlight_color,
+                self.delete_highlight_rect,
+                self.delete_selection_outline_width
+            )
+
+    def draw_move_highlight(self):
+        if self.move_highlight_rect:
+            pygame.draw.rect(
+                self.canvas,
+                self.move_highlight_color,
+                self.move_highlight_rect,
+                self.move_selection_outline_width
+            )
     
     def draw_bottom_right_round_corner(self):
         border_radius: int = 10
@@ -643,6 +686,7 @@ class DrawingArea(SurfaceRect):
         self.draw_player_starting_pos()
         self.draw_preview_selection()
         self.draw_delete_highlight()
+        self.draw_move_highlight()
         self.draw_canvas()
 
 # LINK #DrawingAreaUpdate
