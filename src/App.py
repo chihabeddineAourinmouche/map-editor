@@ -2,7 +2,7 @@ import copy
 import json
 import sys
 import os
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 from .utility import *
 from .ImageCache import ImageCache
 from .SpriteData import SpriteData
@@ -22,8 +22,10 @@ from .I18n import I18n
 class App:
     # ANCHOR[id=AppClass]
     
-    def __init__(self, config: Dict[str, Union[str, int, float, bool, Dict, List, Tuple]]) -> None:
+    def __init__(self, config: Dict[str, Union[str, int, float, bool, Dict, List, Tuple]], delete_user_config_file: Callable) -> None:
         # ANCHOR[id=AppInit]
+        
+        self.delete_user_config_file = delete_user_config_file
 
         self.i18n: I18n = I18n()
         
@@ -182,6 +184,10 @@ class App:
                     "callback": self.set_move_mode,
                     "animated_frame_suffixes": range(9)
                 },
+                "control_clear_user_config": {
+                    "callback": self.clear_user_config,
+                    "animated_frame_suffixes": range(15)
+                },
             },
             self.set_tooltip_text,
             config.get("control_fill_color"),
@@ -210,6 +216,8 @@ class App:
         self.modifier_key_CTRL_pressed = False
         
         self.tooltip_text = None
+        
+        self.user_config_cleared = False
 
         self.running: bool = True
 
@@ -493,6 +501,24 @@ class App:
         else:
             self.load_map_data()
 
+    def clear_user_config(self):
+        message = self.i18n.translate("app.dialogs.user_config_cleared.message")
+        try:
+            self.delete_user_config_file()
+            self.user_config_cleared = True
+        except:
+            message = self.i18n.translate("app.dialogs.user_config_not_cleared.message")
+        self.set_dialog(Dialog(
+            self.screen,
+            message,
+            {
+                self.i18n.translate("app.dialogs.user_config_not_cleared.ok"): {
+                    "callback": self.close_dialog,
+                    "filled": True
+                }
+            }
+        ))
+
     # ANCHOR[id=Tooltip]
     def set_tooltip_text(self, text: Optional[str] = None) -> None:
         self.tooltip_text = text
@@ -556,6 +582,13 @@ class App:
                 "hint": {
                     "disabled": self.i18n.translate("app.controls.move.hint_disabled_no_sprites_to_move") if not self.drawing_area.has_sprites() else self.i18n.translate("app.controls.move.hint_disabled_already_in_move_mode"),
                     "enabled": self.i18n.translate("app.controls.move.hint_enabled"),
+                },
+            },
+            "control_clear_user_config": {
+                "disabled": self.user_config_cleared,
+                "hint": {
+                    "disabled": self.i18n.translate("app.controls.clear_user_config.hint_disabled"),
+                    "enabled": self.i18n.translate("app.controls.clear_user_config.hint_enabled"),
                 },
             },
         }
@@ -678,7 +711,8 @@ class App:
         # ANCHOR[id=AppFixedUpdate]
         self.drawing_area.fixed_update(
             self.is_delete_mode(),
-            self.is_move_mode()
+            self.is_move_mode(),
+            self.is_hitbox_mode()
         )
         self.control.fixed_update(self.get_control_button_update_data())
         # LINK: #DisplayUpdate
@@ -721,7 +755,8 @@ class App:
         # Always draw display cursor on top of display tooltip and draw both on top of all other elements
         # if self.tooltip_text:# TODO - Maybe remove for good. This causes the tooltip, while hovering Display in fixed_update, to flicker
         self.display.draw_tooltip()
-        self.display.draw_cursor()
+        if not self.is_sprite_mode():
+            self.display.draw_cursor()
 
         pygame.display.flip()
 

@@ -151,6 +151,17 @@ def save_language_preference(language, filename="temp_language.txt"):
     except IOError as e:
         Logger.error(f"Error saving language preference to {filename}: {e}")
 
+def delete_file_if_exists(filename):
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+            return True
+        except Exception as e:
+            print(f"An error occurred while deleting the file: {e}")
+            return False
+    else:
+        return False
+
 def get_language_preference(filename="temp_language.txt"):
     try:
         # Check if the file exists before trying to open it

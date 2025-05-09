@@ -276,6 +276,12 @@ i18n:
                     message: The map data doesn't match with the sprites
                     load_another: Load another
                     cancel: Cancel
+                user_config_cleared:
+                    message: User config cleared successfully
+                    ok: OK
+                user_config_not_cleared:
+                    message: Failed to clear user config. Do it manually
+                    ok: OK
             controls:
                 save:
                     hint_disabled: No changes to save
@@ -303,6 +309,9 @@ i18n:
                     hint_disabled_no_sprites_to_move: There are no sprites yet to move
                     hint_disabled_already_in_move_mode: Already in move mode
                     hint_enabled: Switch to moving mode
+                clear_user_config:
+                    hint_disabled: User config already cleared
+                    hint_enabled: Clear user config
             display:
                 game_file_status_no_game: No game loaded
                 game_file_status_game_loaded: Game loaded

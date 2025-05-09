@@ -490,23 +490,7 @@ class DrawingArea(SurfaceRect):
             if not self.is_hovered:
                 self.interrupt_moving_sprite()
                 
-            if is_hitbox_mode:
-                if self.is_drawing_hitbox and self.start_hitbox_drawing_pos:
-                    self.current_hitbox_drawing_pos = self.canvas_mouse_pos
-                    x = min(self.start_hitbox_drawing_pos[0], self.current_hitbox_drawing_pos[0])
-                    y = min(self.start_hitbox_drawing_pos[1], self.current_hitbox_drawing_pos[1])
-                    width = abs(self.start_hitbox_drawing_pos[0] - self.current_hitbox_drawing_pos[0])
-                    height = abs(self.start_hitbox_drawing_pos[1] - self.current_hitbox_drawing_pos[1])
-                    self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
-            elif is_delete_mode:
-                if self.is_deleting and self.start_deleting_pos:
-                    self.current_deleting_pos = self.canvas_mouse_pos
-                    x = min(self.start_deleting_pos[0], self.current_deleting_pos[0])
-                    y = min(self.start_deleting_pos[1], self.current_deleting_pos[1])
-                    width = abs(self.start_deleting_pos[0] - self.current_deleting_pos[0])
-                    height = abs(self.start_deleting_pos[1] - self.current_deleting_pos[1])
-                    self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
-            elif is_move_mode:
+            if is_move_mode:
                 if self.is_moving and self.start_moving_pos:
                     self.move_highlight_rect = None
                     list_containing_sprite_to_move: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == self.moving_sprite_id, self.sprites))
@@ -543,13 +527,35 @@ class DrawingArea(SurfaceRect):
     
     def fixed_update(self,
         is_delete_mode: bool,
-        is_move_mode: bool
+        is_move_mode: bool,
+        is_hitbox_mode: bool
     ):
+        absolute_mouse_pos: Coords = pygame.mouse.get_pos()
+        
         if not is_move_mode:
             self.interrupt_moving_sprite()
+            
         if not is_delete_mode:
             self.interrupt_deleting()
-        absolute_mouse_pos: Coords = pygame.mouse.get_pos()
+        else:
+            if is_delete_mode:
+                if self.is_deleting and self.start_deleting_pos:
+                    self.current_deleting_pos = self.canvas_mouse_pos
+                    x = min(self.start_deleting_pos[0], self.current_deleting_pos[0])
+                    y = min(self.start_deleting_pos[1], self.current_deleting_pos[1])
+                    width = abs(self.start_deleting_pos[0] - self.current_deleting_pos[0])
+                    height = abs(self.start_deleting_pos[1] - self.current_deleting_pos[1])
+                    self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
+                    
+        if is_hitbox_mode:
+            if self.is_drawing_hitbox and self.start_hitbox_drawing_pos:
+                self.current_hitbox_drawing_pos = self.canvas_mouse_pos
+                x = min(self.start_hitbox_drawing_pos[0], self.current_hitbox_drawing_pos[0])
+                y = min(self.start_hitbox_drawing_pos[1], self.current_hitbox_drawing_pos[1])
+                width = abs(self.start_hitbox_drawing_pos[0] - self.current_hitbox_drawing_pos[0])
+                height = abs(self.start_hitbox_drawing_pos[1] - self.current_hitbox_drawing_pos[1])
+                self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
+                
         direction_x: int = None
         # [dx,dy]=[cx−sx,cy−sy]
         if self.is_drawing_hitbox and (absolute_mouse_pos[0] >= self.rect.x + self.rect.width or absolute_mouse_pos[0] <= self.rect.x):

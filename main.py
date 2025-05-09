@@ -159,5 +159,5 @@ if __name__ == "__main__":
         Logger.error("Error loading configuration")
         exit(1)
     
-    app = App(config)
+    app = App(config, lambda : delete_file_if_exists(path.join(os.path.normpath(configYML.get("user_config_directory")), configYML.get("user_config_filename"))))
     app.run()
