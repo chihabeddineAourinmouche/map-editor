@@ -598,6 +598,11 @@ class App:
     def get_display_data(self):
         return [
             {
+                "type": "text",
+                "data": ", ".join(map(str, self.drawing_area.calculate_snapping_coords() or [] if self.is_sprite_mode() else self.drawing_area.get_mouse_position_on_canvas() or [])),
+                "hint": "x, y",
+            },
+            {
                 "type": "icon",
                 "icon_name": self.display_game_file_not_exists if not self.game_runner.get_game_executable_path() else self.display_game_file_exists,
                 "hint": self.i18n.translate("app.display.game_file_status_no_game") if not self.game_runner.get_game_executable_path() else self.i18n.translate("app.display.game_file_status_game_loaded"),
@@ -611,11 +616,6 @@ class App:
                 "type": "text",
                 "data": self.i18n.translate(f"app.display.mode_{self.modes[self.mode]}"),
                 "hint": self.i18n.translate(f"app.display.mode_{self.modes[self.mode]}_hint"),
-            },
-            {
-                "type": "text",
-                "data": str(self.drawing_area.calculate_snapping_coords() if self.is_sprite_mode() else self.drawing_area.get_mouse_position_on_canvas()),
-                "hint": "x, y",
             },
         ]
 
