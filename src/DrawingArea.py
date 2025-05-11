@@ -103,6 +103,50 @@ class DrawingArea(SurfaceRect):
     def is_empty(self):
         return len(self.sprites) + len(self.hitboxes) == 0
     
+    def get_right_edge_rect(self) -> Rect:
+        return Rect(
+            self.rect.width - 50,
+            1,
+            50,
+            self.rect.height
+        )
+    
+    def get_left_edge_rect(self) -> Rect:
+        return Rect(
+            1,
+            1,
+            50,
+            self.rect.height
+        )
+    
+    def get_top_edge_rect(self) -> Rect:
+        return Rect(
+            1,
+            1,
+            self.rect.width,
+            50
+        )
+    
+    def get_bottom_edge_rect(self) -> Rect:
+        return Rect(
+            1,
+            self.rect.height - 50,
+            self.rect.width,
+            50
+        )
+    
+    def is_right_edge_hovered(self) -> bool:
+        return self.get_right_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+    
+    def is_left_edge_hovered(self) -> bool:
+        return self.get_left_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+    
+    def is_top_edge_hovered(self) -> bool:
+        return self.get_top_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+    
+    def is_bottom_edge_hovered(self) -> bool:
+        return self.get_bottom_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+    
     def get_sprite_by_id(self, _id) -> Union[Sprite, None]:
         sprites: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == _id, self.sprites))
         return sprites[0] if len(sprites) else None
@@ -530,22 +574,19 @@ class DrawingArea(SurfaceRect):
         is_move_mode: bool,
         is_hitbox_mode: bool
     ):
-        absolute_mouse_pos: Coords = pygame.mouse.get_pos()
-        
         if not is_move_mode:
             self.interrupt_moving_sprite()
             
         if not is_delete_mode:
             self.interrupt_deleting()
         else:
-            if is_delete_mode:
-                if self.is_deleting and self.start_deleting_pos:
-                    self.current_deleting_pos = self.canvas_mouse_pos
-                    x = min(self.start_deleting_pos[0], self.current_deleting_pos[0])
-                    y = min(self.start_deleting_pos[1], self.current_deleting_pos[1])
-                    width = abs(self.start_deleting_pos[0] - self.current_deleting_pos[0])
-                    height = abs(self.start_deleting_pos[1] - self.current_deleting_pos[1])
-                    self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
+            if self.is_deleting and self.start_deleting_pos:
+                self.current_deleting_pos = self.canvas_mouse_pos
+                x = min(self.start_deleting_pos[0], self.current_deleting_pos[0])
+                y = min(self.start_deleting_pos[1], self.current_deleting_pos[1])
+                width = abs(self.start_deleting_pos[0] - self.current_deleting_pos[0])
+                height = abs(self.start_deleting_pos[1] - self.current_deleting_pos[1])
+                self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
                     
         if is_hitbox_mode:
             if self.is_drawing_hitbox and self.start_hitbox_drawing_pos:
@@ -556,20 +597,15 @@ class DrawingArea(SurfaceRect):
                 height = abs(self.start_hitbox_drawing_pos[1] - self.current_hitbox_drawing_pos[1])
                 self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
                 
-        direction_x: int = None
-        # [dx,dy]=[cx−sx,cy−sy]
-        if self.is_drawing_hitbox and (absolute_mouse_pos[0] >= self.rect.x + self.rect.width or absolute_mouse_pos[0] <= self.rect.x):
-            direction_x: int = self.current_hitbox_drawing_pos[0] - self.start_hitbox_drawing_pos[0]
-        elif self.is_deleting and (absolute_mouse_pos[0] >= self.rect.x + self.rect.width or absolute_mouse_pos[0] <= self.rect.x):
-            direction_x: int = self.current_deleting_pos[0] - self.start_deleting_pos[0]
-
-        if direction_x != None and abs(direction_x) > 0:
-            direction_x = abs(direction_x) / direction_x
-            if absolute_mouse_pos[0] >= self.rect.x + self.rect.width:
-                direction_x = 1
-            elif absolute_mouse_pos[0] <= self.rect.x:
-                direction_x = -1
-            self.horizontal_scroll(-direction_x)
+        if self.is_drawing_hitbox or self.is_deleting or self.is_moving:
+            if self.is_right_edge_hovered():
+                self.horizontal_scroll(-1)
+            elif self.is_left_edge_hovered():
+                self.horizontal_scroll(1)
+            if self.is_bottom_edge_hovered():
+                self.vertical_scroll(-1)
+            elif self.is_top_edge_hovered():
+                self.vertical_scroll(1)
 
     def add_hitbox(self, hitbox: HitBox) -> None:
         self.hitboxes.append(hitbox)
