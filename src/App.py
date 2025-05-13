@@ -755,7 +755,7 @@ class App:
         
         # Always draw display cursor on top of display tooltip and draw both on top of all other elements
         self.display.draw_tooltip()
-        if not (self.is_sprite_mode() and self.drawing_area.get_is_hovered() and not self.drawing_area.is_panning):
+        if not (self.is_sprite_mode() and self.drawing_area.get_is_hovered() and not self.drawing_area.is_panning and not self.dialog):
             self.display.draw_cursor()
 
         pygame.display.flip()

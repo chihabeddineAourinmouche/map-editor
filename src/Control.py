@@ -1,12 +1,13 @@
 from typing import Callable, Dict, List, Optional, Union
 from .utility import *
 from .SurfaceRect import SurfaceRect
+from .SubSurfaceRect import SubSurfaceRect
 from .ImageCache import ImageCache
 from .Logger import Logger
 from os import path
 from .ClickAnimatedSurface import ClickAnimatedSurface
 
-class Control(SurfaceRect):
+class Control(SubSurfaceRect):
     # ANCHOR - Control
     
     def __init__(self,
@@ -101,5 +102,5 @@ class Control(SurfaceRect):
     
     def draw_button(self, button_dict: Dict[str, Union[ClickAnimatedSurface, Rect, Callable, bool]]) -> None:
         button_dict["button"].set_alpha(256 - (button_dict["disabled"] * 192))  # Add translucency
-        pygame.draw.rect(self, self.button_fill_color, button_dict["rect"], border_radius=2)
+        pygame.draw.rect(self.surface, self.button_fill_color, button_dict["rect"], border_radius=2)
         button_dict["button"].draw(button_dict["rect"])

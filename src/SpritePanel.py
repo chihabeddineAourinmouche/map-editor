@@ -3,11 +3,12 @@ from os import listdir, path
 from typing import Callable, List, Tuple
 from .utility import *
 from .SurfaceRect import SurfaceRect
+from .SubSurfaceRect import SubSurfaceRect
 from .ImageCache import ImageCache
 from .Sprite import Sprite
 from .Logger import Logger
 
-class SpritePanel(SurfaceRect):
+class SpritePanel(SubSurfaceRect):
     # ANCHOR - SpritePanel
     
     def __init__(

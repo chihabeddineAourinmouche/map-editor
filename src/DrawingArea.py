@@ -2,13 +2,14 @@ from os import path
 from typing import Callable, List, Optional, Tuple, Union
 from .utility import *
 from .SurfaceRect import SurfaceRect
+from .SubSurfaceRect import SubSurfaceRect
 from .SpriteData import SpriteData
 from .HitBoxData import HitBoxData
 from .Sprite import Sprite
 from .HitBox import HitBox
 from .ImageCache import ImageCache
 
-class DrawingArea(SurfaceRect):
+class DrawingArea(SubSurfaceRect):
     # ANCHOR - DrawingArea
     icon_size: Coords = None
     

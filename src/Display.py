@@ -2,12 +2,13 @@ from functools import reduce
 from typing import Callable, Dict, List, Optional, Union
 from .utility import *
 from .SurfaceRect import SurfaceRect
+from .SubSurfaceRect import SubSurfaceRect
 from .ImageCache import ImageCache
 from .FontManager import FontManager
 from .Logger import Logger
 from os import path
 
-class Display(SurfaceRect):
+class Display(SubSurfaceRect):
     # ANCHOR - Display
 
     def __init__(
@@ -147,7 +148,7 @@ class Display(SurfaceRect):
                 if self.get_is_data_hovered(text_rect):
                     hint: str = d["hint"]
                     self.set_tooltip_surface_rect(hint, absolute_mouse_pos)
-                # pygame.draw.rect(self, (0, 255, 0), text_rect, 2) # FIXME - DEBUG ONLY
+                # pygame.draw.rect(self.surface, (0, 255, 0), text_rect, 2) # FIXME - DEBUG ONLY
             elif d["type"] == "icon":
                 icon_image_surface: Surface = ImageCache().get_image(d["icon_name"], True, self.display_icon_size)
                 icon_image_rect: Rect = Rect(
@@ -170,7 +171,7 @@ class Display(SurfaceRect):
         """
         self.fill(self.fill_color)
         self.draw_data()
-        self.screen.blit(self, self.rect.topleft)
+        # self.screen.blit(self, self.rect.topleft)
     
     def draw_data(self):
         for d in self.display_data:
@@ -182,7 +183,7 @@ class Display(SurfaceRect):
                     d["text_surface"].get_height()
                 ))
             elif d["type"] == "icon":
-                pygame.draw.rect(self, self.icon_fill_color, (
+                pygame.draw.rect(self.surface, self.icon_fill_color, (
                     d["icon_image_rect"].x + (d["icon_image_rect"].width - d["icon_image_surface"].get_width()) // 2,
                     (d["icon_image_rect"].height - d["icon_image_surface"].get_height()) // 2,
                     d["icon_image_surface"].get_width(),
