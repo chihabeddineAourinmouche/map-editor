@@ -21,9 +21,11 @@ class DrawingArea(SubSurfaceRect):
         canvas_fill_color: Color,
         preview_hitbox_outline_color: Color,
         delete_selection_outline_color: Color,
+        clone_selection_outline_color: Color,
         preview_hitbox_outline_width: int,
         delete_selection_outline_width: int,
         move_selection_outline_width: int,
+        clone_selection_outline_width: int,
         canvas_grid_cell_size: int,
         canvas_grid_color: Color,
         snap_threshold: int,
@@ -59,6 +61,9 @@ class DrawingArea(SubSurfaceRect):
         self.move_selection_outline_width: int = move_selection_outline_width
         self.move_highlight_color: Color = move_highlight_color
         
+        self.clone_selection_outline_color: Color = clone_selection_outline_color
+        self.clone_selection_outline_width: int = clone_selection_outline_width
+        
         self.canvas_grid_cell_size: int = canvas_grid_cell_size
         self.canvas_grid_color = canvas_grid_color
         self.canvas: Surface = Surface((canvas_width, canvas_height), pygame.SRCALPHA)
@@ -81,6 +86,7 @@ class DrawingArea(SubSurfaceRect):
         self.is_drawing: bool = False
         self.is_deleting: bool = False
         self.is_moving: bool = False
+        self.is_cloning: bool = False
         
         self.moving_sprite_id: str = None
         
@@ -96,6 +102,9 @@ class DrawingArea(SubSurfaceRect):
         self.highlight_rects: List[Rect] = []
         self.highlight_color: Color = None
         self.highlight_outline_width: int = None
+        
+        self.temporary_sprites: List[Sprite] = []
+        self.simple_click = True
     
     def is_empty(self):
         return len(self.sprites) + len(self.hitboxes) == 0
@@ -210,6 +219,10 @@ class DrawingArea(SubSurfaceRect):
         if moving_sprite != None:
             moving_sprite.set_top_left(self.start_pos)
         self.done_moving_sprite()
+
+    def done_cloning(self):
+        self.is_cloning = False
+        self.temporary_sprites = []
     
     def get_is_drawing_hitbox(self) -> bool:
         return self.is_drawing
@@ -328,41 +341,39 @@ class DrawingArea(SubSurfaceRect):
         self.load_hitboxes(data.get("hitboxes"))
         self.load_player_starting_position(data.get("starting_position"))
 
-    def _update(self,
-        absolute_mouse_pos: Coords,
+# ANCHOR[id=EventHandlers]
+    def handle_mouse_button_down(self,
         event: Event,
+        selected_sprite_id: str,
+        sprites: List[Sprite],
         is_sprite_mode: bool,
         is_hitbox_mode: bool,
         is_delete_mode: bool,
         is_player_mode: bool,
         is_move_mode: bool,
-        sprites: Tuple[Sprite, ...],
-        selected_sprite_id: str,
-        right_click_callback: Callable,
         add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
-        delete_data: Callable[[str, str], None],
         set_player_position: Callable[[Coords], None],
-        move_sprite: Callable[[str, Coords], None]
-    ) -> None:
-        # ANCHOR[id=DrawingAreaUpdate]
-        self.relative_mouse_pos = self.get_relative_mouse_pos(absolute_mouse_pos)
-        self.canvas_mouse_pos = self.get_mouse_position_on_canvas()
-        
+        right_click_callback: Callable
+    ):
         if self.get_is_hovered(True):
             selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == MouseButtons.LEFT:
                     if is_sprite_mode:
                         if len(selected_sprites):
-                            snapping_coords = self.calculate_snapping_coords()
-                            sprite = Sprite(
-                                *snapping_coords,
-                                self.canvas,
-                                ImageCache().get_image(selected_sprites[0].get_name()),
-                                selected_sprites[0].get_name()
+                            self.is_cloning = True
+                            self.start_pos = [
+                                self.canvas_mouse_pos[0] - (self.ghost_sprite.get_sprite_rect().width // 2),
+                                self.canvas_mouse_pos[1] - (self.ghost_sprite.get_sprite_rect().height // 2),
+                            ]
+                            self.current_pos = [
+                                self.canvas_mouse_pos[0] - (self.ghost_sprite.get_sprite_rect().width // 2),
+                                self.canvas_mouse_pos[1] - (self.ghost_sprite.get_sprite_rect().height // 2),
+                            ]
+                            self.selection_rect = Rect(
+                                *self.start_pos,
+                                0, 0
                             )
-                            self.add_sprite(sprite)
-                            add_data(sprite.get_data(), "sprite")
                     elif is_hitbox_mode:
                         self.is_drawing = True
                         self.start_pos = self.canvas_mouse_pos
@@ -394,7 +405,12 @@ class DrawingArea(SubSurfaceRect):
                                 self.current_pos = self.canvas_mouse_pos
                 
                 if event.button == MouseButtons.RIGHT:
-                    if is_hitbox_mode:
+                    if is_sprite_mode:
+                        if self.is_cloning:
+                            self.done_cloning()
+                        else:
+                            right_click_callback()
+                    elif is_hitbox_mode:
                         if self.is_drawing:
                             self.done_drawing()
                         else:
@@ -416,32 +432,114 @@ class DrawingArea(SubSurfaceRect):
                     self.is_panning = True
                     self.start_pos = self.relative_mouse_pos
 
-            if event.type == pygame.MOUSEWHEEL:
-                keys_pressed = pygame.key.get_pressed()
-                if keys_pressed[KeyboardKeys.LEFT_ALT]:
-                    self.horizontal_scroll(event.y)
-                else:
-                    self.vertical_scroll(event.y)
-
+    def handle_mouse_motion(self,
+        event: Event,
+        is_sprite_mode: bool,
+        is_hitbox_mode: bool,
+        is_delete_mode: bool,
+        is_move_mode: bool,
+    ):
+        if event.type == pygame.MOUSEMOTION:
+            if not self.is_hovered:
+                self.interrupt_moving_sprite()
+              
             if is_sprite_mode:
-                self.display_ghost_sprite = True
-                selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
-                if len(selected_sprites) and not self.is_panning:
-                    if self.ghost_sprite == None or self.ghost_sprite.get_id() != selected_sprite_id:
-                        self.ghost_sprite = Sprite(
-                            *selected_sprites[0].get_sprite_rect().topleft,
-                            self.canvas,
-                            ImageCache().get_image(selected_sprites[0].get_name()),
-                            selected_sprites[0].get_name(),
-                            selected_sprite_id
-                        )
+                if self.is_cloning:
+                    self.current_pos = [
+                        self.canvas_mouse_pos[0] - (self.ghost_sprite.get_sprite_rect().width // 2),
+                        self.canvas_mouse_pos[1] - (self.ghost_sprite.get_sprite_rect().height // 2),
+                    ]
+                    x: int = min(self.start_pos[0], self.current_pos[0])
+                    y: int = min(self.start_pos[1], self.current_pos[1])
+                    w: int = abs(self.start_pos[0] - self.current_pos[0])
+                    h: int = abs(self.start_pos[1] - self.current_pos[1])
+                    self.selection_rect = Rect(x, y, w, h)
+                    nb_sprites_to_draw_x: int = w // self.ghost_sprite.get_sprite_rect().width
+                    nb_sprites_to_draw_y: int = h // self.ghost_sprite.get_sprite_rect().height
+                    self.temporary_sprites = []
+                    for i in range(nb_sprites_to_draw_x):
+                        for j in range(nb_sprites_to_draw_y):
+                            self.temporary_sprites.append(
+                                Sprite(
+                                    x + i * self.ghost_sprite.get_sprite_rect().width,
+                                    y + j * self.ghost_sprite.get_sprite_rect().height,
+                                    self.canvas,
+                                    self.ghost_sprite.get_image(),
+                                    self.ghost_sprite.get_name()
+                                )
+                            )
+                    if w > 0 and h > 0:
+                        self.simple_click = False
+                    
+            elif is_move_mode:
+                if self.is_moving and self.start_pos:
+                    moving_sprite: Union[Sprite, None] = self.get_sprite_by_id(self.moving_sprite_id)
+                    if moving_sprite != None:
+                        self.current_pos = self.calculate_snapping_coords()
+                        moving_sprite.set_top_left(self.current_pos)
+                        self.highlight_rects = [moving_sprite.get_sprite_rect(moving_sprite.topleft)]
                     else:
-                        self.ghost_sprite.set_image(self.ghost_sprite.get_image().copy())
-                    self.ghost_sprite.set_top_left(self.calculate_snapping_coords())
+                        self.move_highlight_rects = []
+                        
+            elif (is_hitbox_mode and self.is_drawing) or (is_delete_mode and self.is_deleting):
+                self.selection_rect = Rect(
+                    min(self.start_pos[0], self.current_pos[0]),
+                    min(self.start_pos[1], self.current_pos[1]),
+                    abs(self.start_pos[0] - self.current_pos[0]),
+                    abs(self.start_pos[1] - self.current_pos[1])
+                )
+            
+            if self.is_panning:
+                if self.start_pos:
+                    delta = [self.relative_mouse_pos[0] - self.start_pos[0], self.relative_mouse_pos[1] - self.start_pos[1]]
+                    self.panning_offset = [self.panning_offset[0] + delta[0], self.panning_offset[1] + delta[1]]
+                    self.start_pos = self.relative_mouse_pos
+                    
+                    # Keep canvas within viewport bounds
+                    canvas_rect = self.canvas.get_rect()
+                    if canvas_rect.width < self.rect.width:
+                        self.panning_offset[0] = 0
+                    else:
+                        self.panning_offset[0] = max(self.rect.width - canvas_rect.width, min(0, self.panning_offset[0]))
 
+                    if canvas_rect.height < self.rect.height:
+                        self.panning_offset[1] = 0
+                    else:
+                        self.panning_offset[1] = max(self.rect.height - canvas_rect.height, min(0, self.panning_offset[1]))
+
+    def handle_mouse_button_up(self,
+        event: Event,
+        selected_sprite_id: str,
+        sprites: List[Sprite],
+        is_sprite_mode: bool,
+        is_hitbox_mode: bool,
+        is_delete_mode: bool,
+        is_move_mode: bool,
+        add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
+        delete_data: Callable[[str, str], None],
+        move_sprite: Callable[[str, Coords], None]
+    ):
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == MouseButtons.LEFT:
-                if is_hitbox_mode:
+                if is_sprite_mode:
+                    if self.is_cloning and self.selection_rect.width > 0 and self.selection_rect.height > 0:
+                        self.sprites += self.temporary_sprites
+                    else:
+                        if self.simple_click and self.get_is_hovered(True):
+                            selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
+                            if len(selected_sprites):
+                                snapping_coords = self.calculate_snapping_coords()
+                                sprite = Sprite(
+                                    *snapping_coords,
+                                    self.canvas,
+                                    ImageCache().get_image(selected_sprites[0].get_name()),
+                                    selected_sprites[0].get_name()
+                                )
+                                self.add_sprite(sprite)
+                                add_data(sprite.get_data(), "sprite")
+                    self.done_cloning()
+                    self.simple_click = True # Should be exactly here to reset simple click
+                elif is_hitbox_mode:
                     if self.is_drawing and self.start_pos:
                         if self.selection_rect.width > 0 and self.selection_rect.height > 0:
                             hitbox = HitBox(
@@ -493,53 +591,110 @@ class DrawingArea(SubSurfaceRect):
                 self.is_panning = False
                 self.interrupt_selection()
 
-        if event.type == pygame.MOUSEMOTION:
-            if not self.is_hovered:
-                self.interrupt_moving_sprite()
-                
-            if is_move_mode:
-                if self.is_moving and self.start_pos:
-                    moving_sprite: Union[Sprite, None] = self.get_sprite_by_id(self.moving_sprite_id)
-                    if moving_sprite != None:
-                        self.current_pos = self.calculate_snapping_coords()
-                        moving_sprite.set_top_left(self.current_pos)
-                        self.highlight_rects = [moving_sprite.get_sprite_rect(moving_sprite.topleft)]
-                    else:
-                        self.move_highlight_rects = []
-                        
-            elif (is_hitbox_mode and self.is_drawing) or (is_delete_mode and self.is_deleting):
-                self.selection_rect = Rect(
-                    min(self.start_pos[0], self.current_pos[0]),
-                    min(self.start_pos[1], self.current_pos[1]),
-                    abs(self.start_pos[0] - self.current_pos[0]),
-                    abs(self.start_pos[1] - self.current_pos[1])
-                )
-            
-            if self.is_panning:
-                if self.start_pos:
-                    delta = [self.relative_mouse_pos[0] - self.start_pos[0], self.relative_mouse_pos[1] - self.start_pos[1]]
-                    self.panning_offset = [self.panning_offset[0] + delta[0], self.panning_offset[1] + delta[1]]
-                    self.start_pos = self.relative_mouse_pos
-                    
-                    # Keep canvas within viewport bounds
-                    canvas_rect = self.canvas.get_rect()
-                    if canvas_rect.width < self.rect.width:
-                        self.panning_offset[0] = 0
-                    else:
-                        self.panning_offset[0] = max(self.rect.width - canvas_rect.width, min(0, self.panning_offset[0]))
+    def handle_mouse_wheel(self, event: Event):
+        if self.get_is_hovered(True):
+            if event.type == pygame.MOUSEWHEEL:
+                keys_pressed = pygame.key.get_pressed()
+                if keys_pressed[KeyboardKeys.LEFT_ALT]:
+                    self.horizontal_scroll(event.y)
+                else:
+                    self.vertical_scroll(event.y)
 
-                    if canvas_rect.height < self.rect.height:
-                        self.panning_offset[1] = 0
+    def update_ghost_sprite(self,
+        is_sprite_mode: bool,
+        sprites: Tuple[Sprite, ...],
+        selected_sprite_id: str,
+    ):
+        if self.get_is_hovered(True):
+            if is_sprite_mode:
+                self.display_ghost_sprite = True
+                selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
+                if len(selected_sprites) and not self.is_panning:
+                    if self.ghost_sprite == None or self.ghost_sprite.get_id() != selected_sprite_id:
+                        self.ghost_sprite = Sprite(
+                            *selected_sprites[0].get_sprite_rect().topleft,
+                            self.canvas,
+                            ImageCache().get_image(selected_sprites[0].get_name()),
+                            selected_sprites[0].get_name(),
+                            selected_sprite_id
+                        )
                     else:
-                        self.panning_offset[1] = max(self.rect.height - canvas_rect.height, min(0, self.panning_offset[1]))
-
+                        self.ghost_sprite.set_image(self.ghost_sprite.get_image().copy())
+                    self.ghost_sprite.set_top_left(self.calculate_snapping_coords())
+        
         if not self.get_is_hovered(True) or not is_sprite_mode or self.is_panning:
             self.display_ghost_sprite = False
+
+
+    def _update(self,
+        absolute_mouse_pos: Coords,
+        event: Event,
+        is_sprite_mode: bool,
+        is_hitbox_mode: bool,
+        is_delete_mode: bool,
+        is_player_mode: bool,
+        is_move_mode: bool,
+        sprites: Tuple[Sprite, ...],
+        selected_sprite_id: str,
+        right_click_callback: Callable,
+        add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
+        delete_data: Callable[[str, str], None],
+        set_player_position: Callable[[Coords], None],
+        move_sprite: Callable[[str, Coords], None]
+    ) -> None:
+        # ANCHOR[id=DrawingAreaUpdate]
+        self.relative_mouse_pos = self.get_relative_mouse_pos(absolute_mouse_pos)
+        self.canvas_mouse_pos = self.get_mouse_position_on_canvas()
+        
+        self.handle_mouse_button_down(
+            event,
+            selected_sprite_id,
+            sprites,
+            is_sprite_mode,
+            is_hitbox_mode,
+            is_delete_mode,
+            is_player_mode,
+            is_move_mode,
+            add_data,
+            set_player_position,
+            right_click_callback
+        )
+
+        self.handle_mouse_wheel(event)
+
+        self.handle_mouse_button_up(
+            event,
+            selected_sprite_id,
+            sprites,
+            is_sprite_mode,
+            is_hitbox_mode,
+            is_delete_mode,
+            is_move_mode,
+            add_data,
+            delete_data,
+            move_sprite
+        )
+
+        self.handle_mouse_motion(
+            event,
+            is_sprite_mode,
+            is_hitbox_mode,
+            is_delete_mode,
+            is_move_mode
+        )
+
+        self.update_ghost_sprite(
+            is_sprite_mode,
+            sprites,
+            selected_sprite_id
+        )
             
+
     def fixed_update(self,
         is_delete_mode: bool,
         is_move_mode: bool
     ):
+        # ANCHOR[id=DrawingAreaFixedUpdate]
         if is_delete_mode:
             if not self.is_panning:
                 if not self.is_deleting:
@@ -581,7 +736,7 @@ class DrawingArea(SubSurfaceRect):
         if (self.is_deleting or self.is_drawing or self.is_moving or self.is_panning) and self.start_pos:
             self.current_pos = self.canvas_mouse_pos
 
-        if not (self.is_drawing or self.is_deleting or self.is_moving):
+        if not (self.is_drawing or self.is_deleting or self.is_moving or self.is_cloning):
             if not self.is_panning:
                 self.interrupt_selection()
         else:
@@ -593,6 +748,7 @@ class DrawingArea(SubSurfaceRect):
                 self.vertical_scroll(-1)
             elif self.is_top_edge_hovered():
                 self.vertical_scroll(1)
+
 
     def add_hitbox(self, hitbox: HitBox) -> None:
         self.hitboxes.append(hitbox)
@@ -625,9 +781,10 @@ class DrawingArea(SubSurfaceRect):
             color: Color = None
             outline_width: int = None
             (color, outline_width) = {
-                (True, False): (self.preview_hitbox_outline_color, self.preview_hitbox_outline_width),
-                (False, True): (self.delete_selection_outline_color, self.delete_selection_outline_width),
-            }.get((self.is_drawing, self.is_deleting), ((0, 0, 0, 0), 0)) # Else transparent, no width
+                (True, False, False): (self.preview_hitbox_outline_color, self.preview_hitbox_outline_width),
+                (False, True, False): (self.delete_selection_outline_color, self.delete_selection_outline_width),
+                (False, False, True): (self.clone_selection_outline_color, self.clone_selection_outline_width),
+            }.get((self.is_drawing, self.is_deleting, self.is_cloning), ((0, 0, 0, 0), 0)) # Else transparent, no width
             x, y, width, height = list(self.selection_rect)
             self.selection_rect_alpha_surface = Surface(self.selection_rect.size, pygame.SRCALPHA)
             self.selection_rect_alpha_surface.set_alpha(64)
@@ -651,8 +808,8 @@ class DrawingArea(SubSurfaceRect):
             for y in range(0, height, self.canvas_grid_cell_size):
                 pygame.draw.line(self.canvas, self.canvas_grid_color, (0, y), (width, y))
 
-    def draw_preview_sprite(self):
-        if self.display_ghost_sprite and self.ghost_sprite:
+    def draw_ghost_sprite(self):
+        if self.display_ghost_sprite and self.ghost_sprite and not self.is_cloning:
             # Draw translucent box
             self.ghost_sprite.set_alpha(128)  # 50% translucent
             self.ghost_sprite.draw()
@@ -687,17 +844,24 @@ class DrawingArea(SubSurfaceRect):
                 )
             )
 
+    def draw_temporary_sprites(self):
+        for sprite in self.temporary_sprites:
+            sprite.draw()
+
     def _draw(self) -> None:
     # ANCHOR[id=DrawingAreaDraw]
         self.draw_bottom_right_round_corner()
         self.draw_grid()
         self.draw_sprites()
-        self.draw_preview_sprite()
+        self.draw_ghost_sprite()
         self.draw_hitboxes()
         self.draw_selection_rect()
         self.draw_highlight_rects()
+        self.draw_temporary_sprites()
         self.draw_player_starting_pos()
         self.draw_canvas()
 
+# LINK #EventHandlers
 # LINK #DrawingAreaUpdate
+# LINK #DrawingAreaFixedUpdate
 # LINK #DrawingAreaDraw

@@ -23,9 +23,11 @@ drawing_area_preview_hit_box_outline_color_theme:
     true: [229, 233, 240]
     false: [57, 67, 76]
 drawing_area_delete_selection_outline_color: [255, 94, 87]
+drawing_area_clone_selection_outline_color: [99, 230, 190]
 drawing_area_preview_hit_box_outline_width: 1
 drawing_area_delete_selection_outline_width: 3
 drawing_area_move_selection_outline_width: 3
+drawing_area_clone_selection_outline_width: 3
 drawing_area_snap_threshold: 2
 drawing_area_delete_highlight_color: [255, 94, 87]
 drawing_area_move_highlight_color: [253, 185, 36]
