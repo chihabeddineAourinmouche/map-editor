@@ -186,7 +186,7 @@ class App:
                 },
                 "control_clear_user_config": {
                     "callback": self.clear_user_config,
-                    "animated_frame_suffixes": range(15)
+                    "animated_frame_suffixes": range(12)
                 },
             },
             self.set_tooltip_text,
@@ -420,6 +420,8 @@ class App:
 
     def save_map_data(self):
         try:
+            self.map_data["world_size"] = self.map_data.get("world_size", self.drawing_area.canvas.get_size())
+            self.map_data["starting_position"] = self.map_data.get("starting_position", (0, 0))
             with open(self.map_output_file, "w") as f:
                 json.dump(self.map_data, f, indent=4)
             self.last_saved_map_data = copy.deepcopy(self.map_data)
@@ -456,7 +458,7 @@ class App:
                 if not data.get("hitboxes"):
                     data["hitboxes"] = []
                 if not data.get("starting_position"):
-                    data["starting_position"] = None
+                    data["starting_position"] = (0, 0)
                 if not data.get("world_size"):
                     data["world_size"] = None
                 if data != None:
@@ -711,8 +713,7 @@ class App:
         # ANCHOR[id=AppFixedUpdate]
         self.drawing_area.fixed_update(
             self.is_delete_mode(),
-            self.is_move_mode(),
-            self.is_hitbox_mode()
+            self.is_move_mode()
         )
         self.control.fixed_update(self.get_control_button_update_data())
         # LINK: #DisplayUpdate

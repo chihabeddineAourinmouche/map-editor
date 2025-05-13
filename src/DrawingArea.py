@@ -10,7 +10,6 @@ from .ImageCache import ImageCache
 
 class DrawingArea(SurfaceRect):
     # ANCHOR - DrawingArea
-    
     icon_size: Coords = None
     
     def __init__(
@@ -19,9 +18,9 @@ class DrawingArea(SurfaceRect):
         screen: Surface,
         canvas_width: int, canvas_height: int,
         canvas_fill_color: Color,
-        preview_hit_box_outline_color: Color,
+        preview_hitbox_outline_color: Color,
         delete_selection_outline_color: Color,
-        preview_hit_box_outline_width: int,
+        preview_hitbox_outline_width: int,
         delete_selection_outline_width: int,
         move_selection_outline_width: int,
         canvas_grid_cell_size: int,
@@ -47,10 +46,17 @@ class DrawingArea(SurfaceRect):
             self.icon_player_position = None
         
         self.canvas_fill_color: Color = canvas_fill_color
-        self.preview_hit_box_outline_color: Color = preview_hit_box_outline_color
+        
+        self.preview_hitbox_outline_color: Color = preview_hitbox_outline_color
+        self.preview_hitbox_outline_width: int = preview_hitbox_outline_width
+        
         self.delete_selection_outline_color: Color = delete_selection_outline_color
-        self.preview_hit_box_outline_width: int = preview_hit_box_outline_width
         self.delete_selection_outline_width: int = delete_selection_outline_width
+
+        self.delete_highlight_color: Color = delete_highlight_color
+        
+        self.move_selection_outline_width: int = move_selection_outline_width
+        self.move_highlight_color: Color = move_highlight_color
         
         self.canvas_grid_cell_size: int = canvas_grid_cell_size
         self.canvas_grid_color = canvas_grid_color
@@ -61,44 +67,34 @@ class DrawingArea(SurfaceRect):
         self.is_hovered: bool = False
         
         self.is_panning: bool = False
-        self.panning_start_pos: Coords = None
         self.panning_offset: Coords = [0, 0]
         
         self.scrolling_speed: int = scrolling_speed
         
         self.sprites: List[Sprite] = []
-        self.ghost_sprite: Sprite = None
-        self.display_ghost_sprite = False
-        self.ghost_sprite_alpha_surface: Surface = Surface((0, 0), pygame.SRCALPHA)
-        
-        self.delete_highlight_rect: Rect = None
-        self.delete_highlight_rects: List[Rect] = []
-        self.delete_highlight_color: Color = delete_highlight_color
-        
-        self.move_selection_outline_width: int = move_selection_outline_width
-        self.move_highlight_color: Color = move_highlight_color
-        self.move_highlight_rect: Rect = None
-        
         self.hitboxes: List[HitBox] = []
         
-        self.start_hitbox_drawing_pos: Coords = None
-        self.current_hitbox_drawing_pos: Coords = None
-        self.is_drawing_hitbox: bool = False
+        self.ghost_sprite: Sprite = None
+        self.display_ghost_sprite = False
         
-        self.start_deleting_pos: Coords = None
-        self.current_deleting_pos: Coords = None
+        self.is_drawing: bool = False
         self.is_deleting: bool = False
-        
-        self.moving_sprite_id: str = None
-        self.start_moving_pos: Coords = None
-        self.current_moving_pos: Coords = None
         self.is_moving: bool = False
         
-        self.hitbox_preview_delete_selection_alpha_surface: Surface = None
-        self.hitbox_preview_delete_selection_rect: Rect = None
+        self.moving_sprite_id: str = None
+        
+        self.selection_rect_alpha_surface: Surface = None
         
         self.relative_mouse_pos: Coords = None
         self.canvas_mouse_pos: Coords = None
+        
+        self.start_pos: Coords = None
+        self.current_pos: Coords = None
+        self.selection_rect: Rect = None
+        
+        self.highlight_rects: List[Rect] = []
+        self.highlight_color: Color = None
+        self.highlight_outline_width: int = None
     
     def is_empty(self):
         return len(self.sprites) + len(self.hitboxes) == 0
@@ -191,34 +187,31 @@ class DrawingArea(SurfaceRect):
     def get_hitbox_id_at(self) -> Union[str, None]:
         hitbox: HitBox = self.get_hitbox_at()
         return hitbox.get_id() if hitbox else None
+    
+    def interrupt_selection(self):
+        self.start_pos = None
+        self.current_pos = None
+        self.selection_rect = None
 
-    def interrupt_drawing_hitbox(self) -> None:
-        self.is_drawing_hitbox = False
-        self.start_hitbox_drawing_pos = None
-        self.current_hitbox_drawing_pos = None
-        self.hitbox_preview_delete_selection_rect = None
+    def done_drawing(self) -> None:
+        self.is_drawing = False
 
-    def interrupt_deleting(self) -> None:
+    def done_deleting(self) -> None:
         self.is_deleting = False
-        self.start_deleting_pos = None
-        self.current_deleting_pos = None
-        self.hitbox_preview_delete_selection_rect = None
-        self.delete_highlight_rects = []
-        self.delete_highlight_rect = None
+        self.highlight_rects = []
+    
+    def done_moving_sprite(self):
+        self.is_moving = False
+        self.moving_sprite_id = None
 
     def interrupt_moving_sprite(self):
-        list_containing_sprite_to_move: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == self.moving_sprite_id, self.sprites))
-        if len(list_containing_sprite_to_move):
-            sprite: Sprite = list_containing_sprite_to_move[0]
-            sprite.set_top_left(self.start_moving_pos)
-        self.is_moving = False
-        self.current_moving_pos = None
-        self.start_moving_pos = None
-        self.moving_sprite_id = None
-        self.move_highlight_rect = None
+        moving_sprite: Union[Sprite, None] = self.get_sprite_by_id(self.moving_sprite_id)
+        if moving_sprite != None:
+            moving_sprite.set_top_left(self.start_pos)
+        self.done_moving_sprite()
     
     def get_is_drawing_hitbox(self) -> bool:
-        return self.is_drawing_hitbox
+        return self.is_drawing
     
     def get_is_deleting(self) -> bool:
         return self.is_deleting
@@ -370,13 +363,21 @@ class DrawingArea(SurfaceRect):
                             self.add_sprite(sprite)
                             add_data(sprite.get_data(), "sprite")
                     elif is_hitbox_mode:
-                        self.is_drawing_hitbox = True
-                        self.start_hitbox_drawing_pos = self.canvas_mouse_pos
-                        self.current_hitbox_drawing_pos = self.canvas_mouse_pos
+                        self.is_drawing = True
+                        self.start_pos = self.canvas_mouse_pos
+                        self.current_pos = self.canvas_mouse_pos
+                        self.selection_rect = Rect(
+                            *self.start_pos,
+                            0, 0
+                        )
                     elif is_delete_mode:
                         self.is_deleting = True
-                        self.start_deleting_pos = self.canvas_mouse_pos
-                        self.current_deleting_pos = self.canvas_mouse_pos
+                        self.start_pos = self.canvas_mouse_pos
+                        self.current_pos = self.canvas_mouse_pos
+                        self.selection_rect = Rect(
+                            *self.start_pos,
+                            0, 0
+                        )
                     elif is_player_mode:
                         self.player_starting_pos = self.canvas_mouse_pos
                         set_player_position(self.canvas_mouse_pos)
@@ -388,18 +389,18 @@ class DrawingArea(SurfaceRect):
                             if len(list_containing_sprite_to_move):
                                 self.is_moving = True
                                 sprite_to_move: Sprite = list_containing_sprite_to_move[0]
-                                self.start_moving_pos = sprite_to_move.get_sprite_rect().topleft
-                                self.current_moving_pos = self.canvas_mouse_pos
+                                self.start_pos = sprite_to_move.get_sprite_rect().topleft
+                                self.current_pos = self.canvas_mouse_pos
                 
                 if event.button == MouseButtons.RIGHT:
                     if is_hitbox_mode:
-                        if self.is_drawing_hitbox:
-                            self.interrupt_drawing_hitbox()
+                        if self.is_drawing:
+                            self.done_drawing()
                         else:
                             right_click_callback()
                     elif is_delete_mode:
                         if self.is_deleting:
-                            self.interrupt_deleting()
+                            self.done_deleting()
                         else:
                             right_click_callback()
                     elif is_move_mode:
@@ -412,7 +413,7 @@ class DrawingArea(SurfaceRect):
                 
                 if event.button == MouseButtons.MIDDLE:
                     self.is_panning = True
-                    self.panning_start_pos = self.relative_mouse_pos
+                    self.start_pos = self.relative_mouse_pos
 
             if event.type == pygame.MOUSEWHEEL:
                 keys_pressed = pygame.key.get_pressed()
@@ -420,34 +421,6 @@ class DrawingArea(SurfaceRect):
                     self.horizontal_scroll(event.y)
                 else:
                     self.vertical_scroll(event.y)
-
-            if is_delete_mode:
-                if not self.is_panning:
-                    if not self.hitbox_preview_delete_selection_rect:
-                        hitbox = self.get_hitbox_at()
-                        if hitbox:
-                            self.delete_highlight_rect = hitbox.get_rect()
-                        else:
-                            self.delete_highlight_rect = None
-                            sprite = self.get_sprite_at()
-                            if sprite != None:
-                                self.delete_highlight_rect = sprite.get_sprite_rect(topleft=sprite.get_sprite_rect().topleft)
-                            else:
-                                self.delete_highlight_rect = None
-                    else:
-                        self.delete_highlight_rects = list(map(
-                            lambda i : i.get_rect(),
-                            self.get_hitboxes_within_rectangle(self.hitbox_preview_delete_selection_rect)
-                        )) + list(map(
-                            lambda i : i.get_sprite_rect(),
-                            self.get_sprites_within_rectangle(self.hitbox_preview_delete_selection_rect)
-                        ))
-                else:
-                    self.delete_highlight_rect = None
-                    self.delete_highlight_rects = []
-            else:
-                self.delete_highlight_rect = None
-                self.delete_highlight_rects = []
 
             if is_sprite_mode:
                 self.display_ghost_sprite = True
@@ -468,26 +441,22 @@ class DrawingArea(SurfaceRect):
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == MouseButtons.LEFT:
                 if is_hitbox_mode:
-                    if self.is_drawing_hitbox and self.start_hitbox_drawing_pos:
-                        if self.get_is_hovered(True):
-                            x = min(self.start_hitbox_drawing_pos[0], self.canvas_mouse_pos[0])
-                            y = min(self.start_hitbox_drawing_pos[1], self.canvas_mouse_pos[1])
-                            width = abs(self.start_hitbox_drawing_pos[0] - self.canvas_mouse_pos[0])
-                            height = abs(self.start_hitbox_drawing_pos[1] - self.canvas_mouse_pos[1])
-                            if width > 0 and height > 0:
-                                hitbox = HitBox(x, y, width, height)
-                                self.add_hitbox(hitbox)
-                                add_data(hitbox.get_data(), "hitbox")
-                            self.interrupt_drawing_hitbox()
+                    if self.is_drawing and self.start_pos:
+                        if self.selection_rect.width > 0 and self.selection_rect.height > 0:
+                            hitbox = HitBox(
+                                self.selection_rect.x,
+                                self.selection_rect.y,
+                                self.selection_rect.width,
+                                self.selection_rect.height
+                            )
+                            self.add_hitbox(hitbox)
+                            add_data(hitbox.get_data(), "hitbox")
+                        self.done_drawing()
                 elif is_delete_mode:
-                    if self.is_deleting and self.start_deleting_pos:
-                        x = min(self.start_deleting_pos[0], self.canvas_mouse_pos[0])
-                        y = min(self.start_deleting_pos[1], self.canvas_mouse_pos[1])
-                        width = abs(self.start_deleting_pos[0] - self.canvas_mouse_pos[0])
-                        height = abs(self.start_deleting_pos[1] - self.canvas_mouse_pos[1])
-                        if width > 0 and height > 0:
-                            hitboxes: List[HitBox] = self.get_hitboxes_within_rectangle(Rect(x, y, width, height))
-                            sprites: List[Sprite] = self.get_sprites_within_rectangle(Rect(x, y, width, height))
+                    if self.is_deleting and self.start_pos:
+                        if self.selection_rect.width > 0 and self.selection_rect.height > 0:
+                            hitboxes: List[HitBox] = self.get_hitboxes_within_rectangle(self.selection_rect)
+                            sprites: List[Sprite] = self.get_sprites_within_rectangle(self.selection_rect)
                             for hitbox_id in list(map(lambda hitbox : hitbox.get_id(), hitboxes)):
                                 self.delete_hitbox(hitbox_id)
                                 delete_data(hitbox_id, "hitbox")
@@ -496,7 +465,7 @@ class DrawingArea(SurfaceRect):
                                 self.delete_sprite(sprite_id)
                                 delete_data(sprite_id, "sprite")
                                 
-                        elif width == 0 and height == 0:
+                        elif self.selection_rect.width == 0 and self.selection_rect.height == 0:
                             hitbox_id = self.get_hitbox_id_at()
                             if hitbox_id != None:
                                 self.delete_hitbox(hitbox_id)
@@ -511,48 +480,45 @@ class DrawingArea(SurfaceRect):
                                 if sprite_id != None:
                                     self.delete_sprite(sprite_id)
                                     delete_data(sprite_id, "sprite")
-                        self.interrupt_deleting()
+                        self.done_deleting()
                 elif is_move_mode:
-                    if self.is_moving and self.current_moving_pos and self.moving_sprite_id:
-                        list_containing_moved_sprite: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == self.moving_sprite_id, self.sprites))
-                        if len(list_containing_moved_sprite):
-                            move_sprite(self.moving_sprite_id, self.current_moving_pos)
-                            self.is_moving = False
-                            self.start_moving_pos = None
-                            self.current_moving_pos = None
-                            self.moving_sprite_id = None
+                    if self.is_moving and self.current_pos and self.moving_sprite_id:
+                        moving_sprite: Union[Sprite, None] = self.get_sprite_by_id(self.moving_sprite_id)
+                        if moving_sprite != None:
+                            move_sprite(self.moving_sprite_id, self.current_pos)
+                            self.done_moving_sprite()
             
             if event.button == MouseButtons.MIDDLE:
                 self.is_panning = False
-                self.panning_start_pos = None
+                self.interrupt_selection()
 
         if event.type == pygame.MOUSEMOTION:
-            if not pygame.mouse.get_pressed()[1]:
-                self.is_panning = False
-                self.panning_start_pos = None
-            
             if not self.is_hovered:
                 self.interrupt_moving_sprite()
                 
             if is_move_mode:
-                if self.is_moving and self.start_moving_pos:
-                    self.move_highlight_rect = None
-                    list_containing_sprite_to_move: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == self.moving_sprite_id, self.sprites))
-                    if len(list_containing_sprite_to_move):
-                        self.current_moving_pos = self.calculate_snapping_coords()
-                        list_containing_sprite_to_move[0].set_top_left(self.current_moving_pos)
-                elif not self.is_moving:
-                    sprite_pointed_at: Union[Sprite, None] = self.get_sprite_at()
-                    if sprite_pointed_at != None:
-                        self.move_highlight_rect = sprite_pointed_at.get_sprite_rect(sprite_pointed_at.topleft)
+                if self.is_moving and self.start_pos:
+                    moving_sprite: Union[Sprite, None] = self.get_sprite_by_id(self.moving_sprite_id)
+                    if moving_sprite != None:
+                        self.current_pos = self.calculate_snapping_coords()
+                        moving_sprite.set_top_left(self.current_pos)
+                        self.highlight_rects = [moving_sprite.get_sprite_rect(moving_sprite.topleft)]
                     else:
-                        self.move_highlight_rect = None
+                        self.move_highlight_rects = []
+                        
+            elif (is_hitbox_mode and self.is_drawing) or (is_delete_mode and self.is_deleting):
+                self.selection_rect = Rect(
+                    min(self.start_pos[0], self.current_pos[0]),
+                    min(self.start_pos[1], self.current_pos[1]),
+                    abs(self.start_pos[0] - self.current_pos[0]),
+                    abs(self.start_pos[1] - self.current_pos[1])
+                )
             
             if self.is_panning:
-                if self.panning_start_pos:
-                    delta = [self.relative_mouse_pos[0] - self.panning_start_pos[0], self.relative_mouse_pos[1] - self.panning_start_pos[1]]
+                if self.start_pos:
+                    delta = [self.relative_mouse_pos[0] - self.start_pos[0], self.relative_mouse_pos[1] - self.start_pos[1]]
                     self.panning_offset = [self.panning_offset[0] + delta[0], self.panning_offset[1] + delta[1]]
-                    self.panning_start_pos = self.relative_mouse_pos
+                    self.start_pos = self.relative_mouse_pos
                     
                     # Keep canvas within viewport bounds
                     canvas_rect = self.canvas.get_rect()
@@ -568,36 +534,56 @@ class DrawingArea(SurfaceRect):
 
         if not self.get_is_hovered(True) or not is_sprite_mode or self.is_panning:
             self.display_ghost_sprite = False
-    
+            
     def fixed_update(self,
         is_delete_mode: bool,
-        is_move_mode: bool,
-        is_hitbox_mode: bool
+        is_move_mode: bool
     ):
-        if not is_move_mode:
-            self.interrupt_moving_sprite()
-            
-        if not is_delete_mode:
-            self.interrupt_deleting()
+        if is_delete_mode:
+            if not self.is_panning:
+                if not self.is_deleting:
+                    hitbox = self.get_hitbox_at()
+                    if hitbox:
+                        self.highlight_rects = [hitbox.get_rect()]
+                    else:
+                        sprite = self.get_sprite_at()
+                        if sprite != None:
+                            self.highlight_rects = [sprite.get_sprite_rect(topleft=sprite.get_sprite_rect().topleft)]
+                        else:
+                            self.highlight_rects = []
+                else:
+                    self.highlight_rects = list(map(
+                        lambda i : i.get_rect(),
+                        self.get_hitboxes_within_rectangle(self.selection_rect)
+                    )) + list(map(
+                        lambda i : i.get_sprite_rect(),
+                        self.get_sprites_within_rectangle(self.selection_rect)
+                    ))
+        
+        if is_move_mode:
+            if not self.is_panning:
+                if not self.is_moving:
+                    sprite = self.get_sprite_at()
+                    if sprite != None:
+                        self.highlight_rects = [sprite.get_sprite_rect(topleft=sprite.get_sprite_rect().topleft)]
+                    else:
+                        self.highlight_rects = []
+        
+        if not (is_delete_mode or is_move_mode):
+            self.highlight_rects = []
+        
+        self.highlight_color, self.highlight_outline_width = {
+            (True, False): (self.delete_highlight_color, self.delete_selection_outline_width),
+            (False, True): (self.move_highlight_color, self.move_selection_outline_width),
+        }.get((is_delete_mode, is_move_mode), (None, None))
+        
+        if (self.is_deleting or self.is_drawing or self.is_moving or self.is_panning) and self.start_pos:
+            self.current_pos = self.canvas_mouse_pos
+
+        if not (self.is_drawing or self.is_deleting or self.is_moving):
+            if not self.is_panning:
+                self.interrupt_selection()
         else:
-            if self.is_deleting and self.start_deleting_pos:
-                self.current_deleting_pos = self.canvas_mouse_pos
-                x = min(self.start_deleting_pos[0], self.current_deleting_pos[0])
-                y = min(self.start_deleting_pos[1], self.current_deleting_pos[1])
-                width = abs(self.start_deleting_pos[0] - self.current_deleting_pos[0])
-                height = abs(self.start_deleting_pos[1] - self.current_deleting_pos[1])
-                self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
-                    
-        if is_hitbox_mode:
-            if self.is_drawing_hitbox and self.start_hitbox_drawing_pos:
-                self.current_hitbox_drawing_pos = self.canvas_mouse_pos
-                x = min(self.start_hitbox_drawing_pos[0], self.current_hitbox_drawing_pos[0])
-                y = min(self.start_hitbox_drawing_pos[1], self.current_hitbox_drawing_pos[1])
-                width = abs(self.start_hitbox_drawing_pos[0] - self.current_hitbox_drawing_pos[0])
-                height = abs(self.start_hitbox_drawing_pos[1] - self.current_hitbox_drawing_pos[1])
-                self.hitbox_preview_delete_selection_rect = Rect(x, y, width, height)
-                
-        if self.is_drawing_hitbox or self.is_deleting or self.is_moving:
             if self.is_right_edge_hovered():
                 self.horizontal_scroll(-1)
             elif self.is_left_edge_hovered():
@@ -633,22 +619,23 @@ class DrawingArea(SurfaceRect):
         for hitbox in self.get_hitboxes_intersecting_rectangle(self.get_viewport_rect()):
             hitbox.draw(self.canvas)
 
-    def draw_preview_selection(self) -> None:
-        if self.hitbox_preview_delete_selection_rect:
-            color: Color = self.preview_hit_box_outline_color if self.is_drawing_hitbox else self.delete_selection_outline_color
-            outline_width: int = self.preview_hit_box_outline_width if self.is_drawing_hitbox else self.delete_selection_outline_width
-            if self.is_hovered:
-                pass
-            x, y, width, height = list(self.hitbox_preview_delete_selection_rect)
-            if self.is_drawing_hitbox:
+    def draw_selection_rect(self) -> None:
+        if self.selection_rect:
+            color: Color = None
+            outline_width: int = None
+            (color, outline_width) = {
+                (True, False): (self.preview_hitbox_outline_color, self.preview_hitbox_outline_width),
+                (False, True): (self.delete_selection_outline_color, self.delete_selection_outline_width),
+            }.get((self.is_drawing, self.is_deleting), ((0, 0, 0, 0), 0)) # Else transparent, no width
+            x, y, width, height = list(self.selection_rect)
+            self.selection_rect_alpha_surface = Surface(self.selection_rect.size, pygame.SRCALPHA)
+            self.selection_rect_alpha_surface.set_alpha(64)
+            pygame.draw.rect(self.selection_rect_alpha_surface, color, (0, 0, width, height))
+            self.canvas.blit(self.selection_rect_alpha_surface, self.selection_rect)
+            pygame.draw.rect(self.canvas, color, self.selection_rect, outline_width)
+            if self.is_drawing:
                 pygame.draw.line(self.canvas, color, (x, y), (x + width - 1, y + height - 1), outline_width)
                 pygame.draw.line(self.canvas, color, (x, y + height - 1), (x + width - 1, y), outline_width)
-            else:
-                self.hitbox_preview_delete_selection_alpha_surface = Surface(self.hitbox_preview_delete_selection_rect.size, pygame.SRCALPHA)
-                self.hitbox_preview_delete_selection_alpha_surface.set_alpha(64)
-                pygame.draw.rect(self.hitbox_preview_delete_selection_alpha_surface, color, (0, 0, width, height))
-                self.canvas.blit(self.hitbox_preview_delete_selection_alpha_surface, (x, y, width, height))
-            pygame.draw.rect(self.canvas, color, (x, y, width, height), outline_width)
 
     def draw_sprites(self) -> None:
         for sprite in self.get_sprites_intersecting_rectangle(self.get_viewport_rect()):
@@ -667,33 +654,15 @@ class DrawingArea(SurfaceRect):
         if self.display_ghost_sprite and self.ghost_sprite:
             # Draw translucent box
             self.ghost_sprite.set_alpha(128)  # 50% translucent
-            ghost_sprite_rect: Rect = self.ghost_sprite.get_sprite_rect(topleft=self.ghost_sprite.get_sprite_rect().topleft)
             self.ghost_sprite.draw()
 
-    def draw_delete_highlight(self):
-        if self.hitbox_preview_delete_selection_rect:
-            for rect in self.delete_highlight_rects:
-                pygame.draw.rect(self.canvas,
-                    self.delete_highlight_color,
-                    rect,
-                    self.delete_selection_outline_width
-                )
-
-        if self.delete_highlight_rect:
+    def draw_highlight_rects(self):
+        for rect in self.highlight_rects:
             pygame.draw.rect(
                 self.canvas,
-                self.delete_highlight_color,
-                self.delete_highlight_rect,
-                self.delete_selection_outline_width
-            )
-
-    def draw_move_highlight(self):
-        if self.move_highlight_rect:
-            pygame.draw.rect(
-                self.canvas,
-                self.move_highlight_color,
-                self.move_highlight_rect,
-                self.move_selection_outline_width
+                self.highlight_color,
+                rect,
+                self.highlight_outline_width
             )
     
     def draw_bottom_right_round_corner(self):
@@ -719,16 +688,14 @@ class DrawingArea(SurfaceRect):
 
     def _draw(self) -> None:
     # ANCHOR[id=DrawingAreaDraw]
-
         self.draw_bottom_right_round_corner()
         self.draw_grid()
         self.draw_sprites()
         self.draw_preview_sprite()
         self.draw_hitboxes()
+        self.draw_selection_rect()
+        self.draw_highlight_rects()
         self.draw_player_starting_pos()
-        self.draw_preview_selection()
-        self.draw_delete_highlight()
-        self.draw_move_highlight()
         self.draw_canvas()
 
 # LINK #DrawingAreaUpdate
