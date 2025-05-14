@@ -48,7 +48,7 @@ class Control(SubSurfaceRect):
             
             self.relative_mouse_pos = None
     
-    def get_is_hovered(self, absolute_mouse_pos: Coords) -> bool:
+    def is_hovered(self, absolute_mouse_pos: Coords) -> bool:
         return self.rect.collidepoint(absolute_mouse_pos)
 
     def get_is_button_hovered(self, button_filename: str) -> bool:
@@ -70,7 +70,7 @@ class Control(SubSurfaceRect):
             button_dict["disabled"] = buttons.get(button_name) != None and buttons.get(button_name)["disabled"] == True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == MouseButtons.LEFT:
-                    if self.get_is_hovered(absolute_mouse_pos):
+                    if self.is_hovered(absolute_mouse_pos):
                         if not button_dict["disabled"]:
                             if self.get_is_button_hovered(button_name):
                                 callback: Callable = button_dict["callback"]

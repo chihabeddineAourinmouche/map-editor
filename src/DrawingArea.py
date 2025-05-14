@@ -70,8 +70,6 @@ class DrawingArea(SubSurfaceRect):
         
         self.snap_threshold: int = snap_threshold
         
-        self.is_hovered: bool = False
-        
         self.is_panning: bool = False
         self.panning_offset: Coords = [0, 0]
         
@@ -142,16 +140,16 @@ class DrawingArea(SubSurfaceRect):
         )
     
     def is_right_edge_hovered(self) -> bool:
-        return self.get_right_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+        return self.relative_mouse_pos[0] >= self.rect.width - 50
     
     def is_left_edge_hovered(self) -> bool:
-        return self.get_left_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+        return self.relative_mouse_pos[0] < 50
     
     def is_top_edge_hovered(self) -> bool:
-        return self.get_top_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+        return self.relative_mouse_pos[1] < 50
     
     def is_bottom_edge_hovered(self) -> bool:
-        return self.get_bottom_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+        return self.relative_mouse_pos[1] >= self.rect.height - 50
     
     def get_sprite_by_id(self, _id) -> Union[Sprite, None]:
         sprites: List[Sprite] = list(filter(lambda sprite : sprite.get_id() == _id, self.sprites))
@@ -233,13 +231,12 @@ class DrawingArea(SubSurfaceRect):
     def get_is_panning(self) -> bool:
         return self.is_panning
 
-    def get_is_hovered(self, recheck: Optional[bool] = False) -> bool:
-        self.is_hovered = Rect(
+    def is_hovered(self) -> bool:
+        return Rect(
             0, 0,
             min(self.canvas.get_rect(topleft=self.panning_offset).width, self.get_width()),
             min(self.canvas.get_rect(topleft=self.panning_offset).height, self.get_height())
-        ).collidepoint(self.relative_mouse_pos) if recheck else self.is_hovered
-        return self.is_hovered
+        ).collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
 
     def calculate_snapping_coords(self) -> Coords:
         # Calculate canvas coordinates of the mouse (where the sprite will be placed)
@@ -351,11 +348,11 @@ class DrawingArea(SubSurfaceRect):
         is_delete_mode: bool,
         is_player_mode: bool,
         is_move_mode: bool,
-        add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
         set_player_position: Callable[[Coords], None],
-        right_click_callback: Callable
+        right_click_callback: Callable,
+        is_hovered: bool
     ):
-        if self.get_is_hovered(True):
+        if is_hovered:
             selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == MouseButtons.LEFT:
@@ -438,9 +435,10 @@ class DrawingArea(SubSurfaceRect):
         is_hitbox_mode: bool,
         is_delete_mode: bool,
         is_move_mode: bool,
+        is_hovered: bool
     ):
         if event.type == pygame.MOUSEMOTION:
-            if not self.is_hovered:
+            if not is_hovered:
                 self.interrupt_moving_sprite()
               
             if is_sprite_mode:
@@ -517,7 +515,8 @@ class DrawingArea(SubSurfaceRect):
         is_move_mode: bool,
         add_data: Callable[[Union[SpriteData, HitBoxData], str], None],
         delete_data: Callable[[str, str], None],
-        move_sprite: Callable[[str, Coords], None]
+        move_sprite: Callable[[str, Coords], None],
+        is_hovered: bool
     ):
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == MouseButtons.LEFT:
@@ -525,7 +524,7 @@ class DrawingArea(SubSurfaceRect):
                     if self.is_cloning and self.selection_rect.width > 0 and self.selection_rect.height > 0:
                         self.sprites += self.temporary_sprites
                     else:
-                        if self.simple_click and self.get_is_hovered(True):
+                        if self.simple_click and is_hovered:
                             selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
                             if len(selected_sprites):
                                 snapping_coords = self.calculate_snapping_coords()
@@ -591,8 +590,11 @@ class DrawingArea(SubSurfaceRect):
                 self.is_panning = False
                 self.interrupt_selection()
 
-    def handle_mouse_wheel(self, event: Event):
-        if self.get_is_hovered(True):
+    def handle_mouse_wheel(self,
+        event: Event,
+        is_hovered: bool
+    ):
+        if is_hovered:
             if event.type == pygame.MOUSEWHEEL:
                 keys_pressed = pygame.key.get_pressed()
                 if keys_pressed[KeyboardKeys.LEFT_ALT]:
@@ -604,8 +606,9 @@ class DrawingArea(SubSurfaceRect):
         is_sprite_mode: bool,
         sprites: Tuple[Sprite, ...],
         selected_sprite_id: str,
+        is_hovered: bool
     ):
-        if self.get_is_hovered(True):
+        if is_hovered:
             if is_sprite_mode:
                 self.display_ghost_sprite = True
                 selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
@@ -622,7 +625,7 @@ class DrawingArea(SubSurfaceRect):
                         self.ghost_sprite.set_image(self.ghost_sprite.get_image().copy())
                     self.ghost_sprite.set_top_left(self.calculate_snapping_coords())
         
-        if not self.get_is_hovered(True) or not is_sprite_mode or self.is_panning:
+        if not is_hovered or not is_sprite_mode or self.is_panning:
             self.display_ghost_sprite = False
 
 
@@ -646,6 +649,8 @@ class DrawingArea(SubSurfaceRect):
         self.relative_mouse_pos = self.get_relative_mouse_pos(absolute_mouse_pos)
         self.canvas_mouse_pos = self.get_mouse_position_on_canvas()
         
+        is_hovered: bool = self.is_hovered()
+        
         self.handle_mouse_button_down(
             event,
             selected_sprite_id,
@@ -655,12 +660,12 @@ class DrawingArea(SubSurfaceRect):
             is_delete_mode,
             is_player_mode,
             is_move_mode,
-            add_data,
             set_player_position,
-            right_click_callback
+            right_click_callback,
+            is_hovered,
         )
 
-        self.handle_mouse_wheel(event)
+        self.handle_mouse_wheel(event, is_hovered)
 
         self.handle_mouse_button_up(
             event,
@@ -672,7 +677,8 @@ class DrawingArea(SubSurfaceRect):
             is_move_mode,
             add_data,
             delete_data,
-            move_sprite
+            move_sprite,
+            is_hovered
         )
 
         self.handle_mouse_motion(
@@ -680,13 +686,15 @@ class DrawingArea(SubSurfaceRect):
             is_sprite_mode,
             is_hitbox_mode,
             is_delete_mode,
-            is_move_mode
+            is_move_mode,
+            is_hovered
         )
 
         self.update_ghost_sprite(
             is_sprite_mode,
             sprites,
-            selected_sprite_id
+            selected_sprite_id,
+            is_hovered
         )
             
 
@@ -741,13 +749,13 @@ class DrawingArea(SubSurfaceRect):
                 self.interrupt_selection()
         else:
             if self.is_right_edge_hovered():
-                self.horizontal_scroll(-1)
+                self.horizontal_scroll(-1*0.02)
             elif self.is_left_edge_hovered():
-                self.horizontal_scroll(1)
+                self.horizontal_scroll(1*0.02)
             if self.is_bottom_edge_hovered():
-                self.vertical_scroll(-1)
+                self.vertical_scroll(-1*0.02)
             elif self.is_top_edge_hovered():
-                self.vertical_scroll(1)
+                self.vertical_scroll(1*0.02)
 
 
     def add_hitbox(self, hitbox: HitBox) -> None:

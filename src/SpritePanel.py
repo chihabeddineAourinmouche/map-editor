@@ -37,7 +37,8 @@ class SpritePanel(SubSurfaceRect):
         self.previous_sprite_y_pos: int = self.padding
         self.load_sprites()
         
-        self.is_hovered = False
+        self.relative_mouse_pos: Coords = None
+        self.canvas_mouse_pos: Coords = None
         
         self.selected_sprite_id = None
         if len(self.sprites):
@@ -91,8 +92,36 @@ class SpritePanel(SubSurfaceRect):
             except FileNotFoundError:
                 Logger.error(f"Sprite directory not found: {self.sprite_dir}")
 
-    def get_is_hovered(self, mouse_pos: Coords) -> bool:
-        return self.rect.collidepoint(mouse_pos)
+    def get_top_edge_rect(self) -> Rect:
+        return Rect(
+            1,
+            1,
+            self.rect.width,
+            150
+        )
+    
+    def get_bottom_edge_rect(self) -> Rect:
+        return Rect(
+            1,
+            self.rect.height - 150,
+            self.rect.width,
+            150
+        )
+    
+    def is_top_edge_hovered(self) -> bool:
+        # return self.get_top_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+        return self.relative_mouse_pos[1] < 150
+    
+    def is_bottom_edge_hovered(self) -> bool:
+        # return self.get_bottom_edge_rect().collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
+        return self.relative_mouse_pos[1] > self.rect.height - 150
+    
+    def is_hovered(self) -> bool:
+        return Rect(
+            0, 0,
+            min(self.canvas.get_rect(topleft=(0,self.scroll_offset)).width, self.get_width()),
+            min(self.canvas.get_rect(topleft=(0,self.scroll_offset)).height, self.get_height())
+        ).collidepoint(self.relative_mouse_pos)
 
     def get_sprites(self):
         return self.sprites
@@ -111,53 +140,71 @@ class SpritePanel(SubSurfaceRect):
     
     def has_sprite_with_name(self, name: str) -> bool:
         return name in list(map(lambda s : s.get_name(), self.sprites))
+
+    def get_mouse_position_on_canvas(self) -> Coords:
+        if self.relative_mouse_pos != None:
+            return [self.relative_mouse_pos[0], self.relative_mouse_pos[1] - self.scroll_offset]
+        return [0, 0]
     
     def set_selected_sprite_id(self, _id: str) -> None:
         self.selected_sprite_id = _id
 
-    # ANCHOR[id=SpritePanelUpdate]
-    def _update(self, mouse_pos: Coords, event: Event, left_click_callback: Callable, right_click_callback: Callable) -> None:
-        if self.get_is_hovered(mouse_pos):
-            """
-                If mouse cursor is at the bottom (top) fifth, then scroll down (up) faster than up (down).
-                If middle then normal speed.
-            """
-            if abs(self.rect.bottom - mouse_pos[1]) < self.rect.height // 5:
-                self.scrolling_speed_multiplier[1] = 1
-                self.scrolling_speed_multiplier[0] = 2
-            elif abs(self.rect.top - mouse_pos[1]) < self.rect.height // 5:
-                self.scrolling_speed_multiplier[1] = 2
-                self.scrolling_speed_multiplier[0] = 1
+    def handle_mouse_button_down(self,
+        event: Event,
+        left_click_callback: Callable,
+        right_click_callback: Callable
+    ):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == MouseButtons.LEFT:
+                left_click_callback()
+            elif event.button == MouseButtons.RIGHT:
+                right_click_callback()
+
+    def handle_mouse_wheel(self, event: Event):
+        if event.type == pygame.MOUSEWHEEL:
+            if event.y < 0:
+                self.scroll_offset += event.y * self.scroll_speed * self.scrolling_speed_multiplier[0]
+            elif event.y > 0:
+                self.scroll_offset += event.y * self.scroll_speed * self.scrolling_speed_multiplier[1]
+            
+            #keep sprite_panel canvas within viewport bounds
+            canvas_rect = self.canvas.get_rect()
+            viewport = self.rect
+            if canvas_rect.height < viewport.height:
+                self.scroll_offset = 0
             else:
-                self.scrolling_speed_multiplier[1] = 1
-                self.scrolling_speed_multiplier[0] = 1
-            self.is_hovered = True
-            if event.type == pygame.MOUSEWHEEL:
-                if event.y < 0:
-                    self.scroll_offset += event.y * self.scroll_speed * self.scrolling_speed_multiplier[0]
-                elif event.y > 0:
-                    self.scroll_offset += event.y * self.scroll_speed * self.scrolling_speed_multiplier[1]
-                
-                #keep sprite_panel canvas within viewport bounds
-                canvas_rect = self.canvas.get_rect()
-                viewport = self.rect
-                if canvas_rect.height < viewport.height:
-                    self.scroll_offset = 0
-                else:
-                    self.scroll_offset = max(viewport.height - canvas_rect.height, min(0, self.scroll_offset))
+                self.scroll_offset = max(viewport.height - canvas_rect.height, min(0, self.scroll_offset))
+    
+    def update_scroll_speed_multipliers(self):
+        """
+            If mouse cursor is at the bottom (top) fifth, then scroll down (up) faster than up (down).
+            If middle then normal speed.
+        """
+        self.scrolling_speed_multiplier = {
+            (True, False): [1, 2], 
+            (False, True): [2, 1], 
+        }.get((self.is_top_edge_hovered(), self.is_bottom_edge_hovered()), [1, 1])
+    
+    def update_sprite_selection(self, event: Event):
+        for sprite in self.get_sprites_intersecting_rectangle(self.get_viewport_rect()):
+            canvas_rect = self.canvas.get_rect(topleft=[self.rect.x, self.rect.y + self.scroll_offset])
+            sprite.deselect()
+            sprite.update(event, canvas_rect.topleft, self.selected_sprite_id, self.set_selected_sprite_id)
+
+    # ANCHOR[id=SpritePanelUpdate]
+    def _update(self, absolute_mouse_pos: Coords, event: Event, left_click_callback: Callable, right_click_callback: Callable) -> None:
+        self.relative_mouse_pos = self.get_relative_mouse_pos(absolute_mouse_pos)
+        self.canvas_mouse_pos = self.get_mouse_position_on_canvas()
+        
+        if self.is_hovered():
             
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == MouseButtons.LEFT:
-                    left_click_callback()
-                elif event.button == MouseButtons.RIGHT:
-                    right_click_callback()
+            self.update_scroll_speed_multipliers()
+
+            self.handle_mouse_wheel(event)
             
-            for sprite in self.get_sprites_intersecting_rectangle(self.get_viewport_rect()):
-                canvas_rect = self.canvas.get_rect(topleft=[self.rect.x, self.rect.y + self.scroll_offset])
-                sprite.deselect()
-                sprite.update(event, canvas_rect.topleft, self.selected_sprite_id, self.set_selected_sprite_id)
-        else:
-            self.is_hovered = False
+            self.handle_mouse_button_down(event, left_click_callback, right_click_callback)
+            
+            self.update_sprite_selection(event)
 
     def draw_canvas(self) -> None:
         visible_canvas_rect = Rect(0, 0, *self.rect.size).clip(self.canvas.get_rect())

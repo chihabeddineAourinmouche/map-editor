@@ -719,17 +719,18 @@ class App:
         )
         self.control.fixed_update(self.get_control_button_update_data())
         # LINK: #DisplayUpdate
+        is_drawing_area_hovered: bool = self.drawing_area.is_hovered()
         self.display.update(
             {
                 "cursor": self.display_cursor_panning if self.drawing_area.get_is_panning()
                     else self.display_cursor_pointer_danger if self.is_delete_mode() 
-                        and self.drawing_area.get_is_hovered()
+                        and is_drawing_area_hovered
                         and not self.dialog
                     else self.display_cursor_move if self.is_move_mode()
-                        and self.drawing_area.get_is_hovered()
+                        and is_drawing_area_hovered
                         and not self.dialog
                     else self.display_cursor_player if self.is_player_mode()
-                        and self.drawing_area.get_is_hovered()
+                        and is_drawing_area_hovered
                         and not self.dialog
                     else self.display_cursor_pointer,
             },
@@ -757,7 +758,7 @@ class App:
         
         # Always draw display cursor on top of display tooltip and draw both on top of all other elements
         self.display.draw_tooltip()
-        if not (self.is_sprite_mode() and self.drawing_area.get_is_hovered() and not self.drawing_area.is_panning and not self.dialog):
+        if not (self.is_sprite_mode() and self.drawing_area.is_hovered() and not self.drawing_area.is_panning and not self.dialog):
             self.display.draw_cursor()
 
         pygame.display.flip()

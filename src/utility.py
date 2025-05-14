@@ -157,7 +157,7 @@ def delete_file_if_exists(filename):
             os.remove(filename)
             return True
         except Exception as e:
-            print(f"An error occurred while deleting the file: {e}")
+            Logger.error(f"An error occurred while deleting the file: {e}")
             return False
     else:
         return False

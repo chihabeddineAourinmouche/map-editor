@@ -94,10 +94,7 @@ class Display(SubSurfaceRect):
 
         return [x, y]
 
-    def get_is_hovered(self, absolute_mouse_pos: Coords) -> bool:
-        return self.rect.collidepoint(absolute_mouse_pos)
-
-    def get_is_data_hovered(self, text_rect: Rect) -> bool:
+    def is_data_hovered(self, text_rect: Rect) -> bool:
         return text_rect.collidepoint(self.relative_mouse_pos)
 
     def get_relative_mouse_pos(self, absolute_mouse_pos: Coords) -> Coords:
@@ -145,7 +142,7 @@ class Display(SubSurfaceRect):
                 width_acc += text_surface.get_width() + self.gap*2
                 d["text_surface"] = text_surface
                 d["text_rect"] = text_rect
-                if self.get_is_data_hovered(text_rect):
+                if self.is_data_hovered(text_rect):
                     hint: str = d["hint"]
                     self.set_tooltip_surface_rect(hint, absolute_mouse_pos)
                 # pygame.draw.rect(self.surface, (0, 255, 0), text_rect, 2) # FIXME - DEBUG ONLY
@@ -160,7 +157,7 @@ class Display(SubSurfaceRect):
                 width_acc += icon_image_surface.get_width() + self.gap*2
                 d["icon_image_surface"] = icon_image_surface
                 d["icon_image_rect"] = icon_image_rect
-                if self.get_is_data_hovered(icon_image_rect):
+                if self.is_data_hovered(icon_image_rect):
                     hint: str = d["hint"]
                     self.set_tooltip_surface_rect(hint, absolute_mouse_pos)
 

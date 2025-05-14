@@ -31,7 +31,7 @@ drawing_area_clone_selection_outline_width: 3
 drawing_area_snap_threshold: 2
 drawing_area_delete_highlight_color: [255, 94, 87]
 drawing_area_move_highlight_color: [253, 185, 36]
-drawing_area_scrolling_speed: 10
+drawing_area_scrolling_speed: 100
 drawing_area_icon_size: [64, 64]
 drawing_area_icon_player_position: drawing_area_player_position.png
 
