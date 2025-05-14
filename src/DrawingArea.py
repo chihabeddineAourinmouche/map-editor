@@ -239,13 +239,17 @@ class DrawingArea(SubSurfaceRect):
             min(self.canvas.get_rect(topleft=self.panning_offset).height, self.get_height())
         ).collidepoint(self.relative_mouse_pos) if self.relative_mouse_pos else False
 
-    def calculate_snapping_coords(self) -> Coords:
+    def calculate_snapping_coords(self, sprite_size: Optional[Coords]=None) -> Coords:
         # Calculate canvas coordinates of the mouse (where the sprite will be placed)
         if self.ghost_sprite != None:
-            intended_canvas_pos = [
-                self.canvas_mouse_pos[0] - self.ghost_sprite.get_sprite_rect().width // 2,
-                self.canvas_mouse_pos[1] - self.ghost_sprite.get_sprite_rect().height // 2
-            ]
+            intended_canvas_pos = add_list(self.canvas_mouse_pos, (
+                    -self.ghost_sprite.get_sprite_rect().width // 2,
+                    -self.ghost_sprite.get_sprite_rect().height // 2
+                ) if sprite_size == None else (
+                    -sprite_size[0] // 2,
+                    -sprite_size[1] // 2
+                )
+            )
 
             # Calculate the closest grid point
             closest_grid_x = round(intended_canvas_pos[0] / self.canvas_grid_cell_size) * self.canvas_grid_cell_size
@@ -400,7 +404,7 @@ class DrawingArea(SubSurfaceRect):
                                 self.is_moving = True
                                 sprite_to_move: Sprite = list_containing_sprite_to_move[0]
                                 self.start_pos = sprite_to_move.get_sprite_rect().topleft
-                                self.current_pos = self.canvas_mouse_pos
+                                self.current_pos = self.start_pos
                 
                 if event.button == MouseButtons.RIGHT:
                     if is_sprite_mode:
@@ -444,10 +448,7 @@ class DrawingArea(SubSurfaceRect):
               
             if is_sprite_mode:
                 if self.is_cloning:
-                    self.current_pos = [
-                        self.canvas_mouse_pos[0] - (self.ghost_sprite.get_sprite_rect().width // 2),
-                        self.canvas_mouse_pos[1] - (self.ghost_sprite.get_sprite_rect().height // 2),
-                    ]
+                    self.current_pos = self.calculate_snapping_coords()
                     x: int = min(self.start_pos[0], self.current_pos[0])
                     y: int = min(self.start_pos[1], self.current_pos[1])
                     w: int = abs(self.start_pos[0] - self.current_pos[0])
@@ -474,7 +475,7 @@ class DrawingArea(SubSurfaceRect):
                 if self.is_moving and self.start_pos:
                     moving_sprite: Union[Sprite, None] = self.get_sprite_by_id(self.moving_sprite_id)
                     if moving_sprite != None:
-                        self.current_pos = self.calculate_snapping_coords()
+                        self.current_pos = self.calculate_snapping_coords(moving_sprite.get_sprite_rect().size)
                         moving_sprite.set_top_left(self.current_pos)
                         self.highlight_rects = [moving_sprite.get_sprite_rect(moving_sprite.topleft)]
                     else:
@@ -530,9 +531,8 @@ class DrawingArea(SubSurfaceRect):
                         if self.simple_click and is_hovered:
                             selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
                             if len(selected_sprites):
-                                snapping_coords = self.calculate_snapping_coords()
                                 sprite = Sprite(
-                                    *snapping_coords,
+                                    *self.calculate_snapping_coords(),
                                     self.canvas,
                                     ImageCache().get_image(selected_sprites[0].get_name()),
                                     selected_sprites[0].get_name()
@@ -744,7 +744,7 @@ class DrawingArea(SubSurfaceRect):
             (False, True): (self.move_highlight_color, self.move_selection_outline_width),
         }.get((is_delete_mode, is_move_mode), (None, None))
         
-        if (self.is_deleting or self.is_drawing or self.is_moving or self.is_panning) and self.start_pos:
+        if (self.is_deleting or self.is_drawing or self.is_panning) and self.start_pos:
             self.current_pos = self.canvas_mouse_pos
 
         if not (self.is_drawing or self.is_deleting or self.is_moving or self.is_cloning):
