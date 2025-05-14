@@ -603,7 +603,7 @@ class App:
         return [
             {
                 "type": "text",
-                "data": ", ".join(map(str, self.drawing_area.calculate_snapping_coords() or [] if self.is_sprite_mode() else self.drawing_area.get_mouse_position_on_canvas() or [])),
+                "data": ", ".join(map(str, self.drawing_area.calculate_snapping_coords() or [] if (self.is_sprite_mode() or self.is_move_mode() and self.drawing_area.is_moving) else self.drawing_area.get_mouse_position_on_canvas() or [])),
                 "hint": "x, y",
             },
             {
