@@ -1,4 +1,4 @@
-from math import floor
+from math import ceil, floor
 from os import path
 from typing import Callable, List, Optional, Tuple, Union
 from .utility import *
@@ -449,26 +449,55 @@ class DrawingArea(SubSurfaceRect):
             if is_sprite_mode:
                 if self.is_cloning:
                     self.current_pos = self.calculate_snapping_coords()
-                    x: int = min(self.start_pos[0], self.current_pos[0])
-                    y: int = min(self.start_pos[1], self.current_pos[1])
+
                     w: int = abs(self.start_pos[0] - self.current_pos[0])
                     h: int = abs(self.start_pos[1] - self.current_pos[1])
-                    self.selection_rect = Rect(x, y, w, h)
-                    nb_sprites_to_draw_x: int = w // self.ghost_sprite.get_sprite_rect().width
-                    nb_sprites_to_draw_y: int = h // self.ghost_sprite.get_sprite_rect().height
+
+                    rect_x: int = min(self.start_pos[0], self.current_pos[0])
+                    rect_y: int = min(self.start_pos[1], self.current_pos[1])
+                    self.selection_rect = Rect(rect_x, rect_y, w, h)
+
+                    sprite_rect = self.ghost_sprite.get_sprite_rect()
+                    sprite_width = sprite_rect.width
+                    sprite_height = sprite_rect.height
+
+                    """
+                        Determine the drawing direction
+                        If current_pos is >= start_pos, we are drawing in the positive direction (+1).
+                        If current_pos is < start_pos, we are drawing in the negative direction (-1).
+                    """
+                    x_direction: int = 1 if self.current_pos[0] >= self.start_pos[0] else -1
+                    y_direction: int = 1 if self.current_pos[1] >= self.start_pos[1] else -1
+
+                    spawn_coverage_distance: float = 0.3
+                    
+                    def custom_coverage_round(value: float, threshold: Optional[float] = spawn_coverage_distance, direction: Optional[int] = 1) -> int:
+                        return (ceil(value) if value - int(value) > threshold else floor(value)) + ((1-direction) // 2)
+
+                    nb_sprites_to_draw_x: int = custom_coverage_round(w / sprite_width, direction=x_direction)
+                    nb_sprites_to_draw_y: int = custom_coverage_round(h / sprite_height, direction=y_direction)
+
+                    self.selection_rect.width += ((1-x_direction) // 2) * sprite_width
+                    self.selection_rect.height += ((1-y_direction) // 2) * sprite_height
+
                     self.temporary_sprites = []
+
                     for i in range(nb_sprites_to_draw_x):
                         for j in range(nb_sprites_to_draw_y):
+                            sprite_pos_x = self.start_pos[0] + i * sprite_width * x_direction
+                            sprite_pos_y = self.start_pos[1] + j * sprite_height * y_direction
+
                             self.temporary_sprites.append(
                                 Sprite(
-                                    x + i * self.ghost_sprite.get_sprite_rect().width,
-                                    y + j * self.ghost_sprite.get_sprite_rect().height,
+                                    sprite_pos_x,
+                                    sprite_pos_y,
                                     self.canvas,
                                     self.ghost_sprite.get_image(),
                                     self.ghost_sprite.get_name()
                                 )
                             )
-                    if w > 0 and h > 0:
+                            
+                    if w > spawn_coverage_distance and h > spawn_coverage_distance:
                         self.simple_click = False
                     
             elif is_move_mode:
@@ -866,9 +895,9 @@ class DrawingArea(SubSurfaceRect):
         self.draw_sprites()
         self.draw_ghost_sprite()
         self.draw_hitboxes()
+        self.draw_temporary_sprites()
         self.draw_selection_rect()
         self.draw_highlight_rects()
-        self.draw_temporary_sprites()
         self.draw_player_starting_pos()
         self.draw_canvas()
 
