@@ -524,6 +524,8 @@ class DrawingArea(SubSurfaceRect):
                 if is_sprite_mode:
                     if self.is_cloning and self.selection_rect.width > 0 and self.selection_rect.height > 0:
                         self.sprites += self.temporary_sprites
+                        for sprite in self.temporary_sprites:
+                            add_data(sprite.get_data(), "sprite")
                     else:
                         if self.simple_click and is_hovered:
                             selected_sprites = list(filter(lambda sprite : sprite.get_id() == selected_sprite_id, sprites))
