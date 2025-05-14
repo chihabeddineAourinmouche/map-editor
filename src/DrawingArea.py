@@ -1,3 +1,4 @@
+from math import floor
 from os import path
 from typing import Callable, List, Optional, Tuple, Union
 from .utility import *
@@ -279,9 +280,9 @@ class DrawingArea(SubSurfaceRect):
 
     def horizontal_scroll(self, direction: int):
         if direction < 0:
-            self.panning_offset[0] += direction * self.scrolling_speed
+            self.panning_offset[0] += floor(direction * self.scrolling_speed)
         elif direction > 0:
-            self.panning_offset[0] += direction * self.scrolling_speed
+            self.panning_offset[0] += floor(direction * self.scrolling_speed)
         
         #keep sprite_panel canvas within viewport bounds
         canvas_rect = self.canvas.get_rect()
@@ -293,9 +294,9 @@ class DrawingArea(SubSurfaceRect):
     
     def vertical_scroll(self, direction: int):
         if direction < 0:
-            self.panning_offset[1] += direction * self.scrolling_speed
+            self.panning_offset[1] += floor(direction * self.scrolling_speed)
         elif direction > 0:
-            self.panning_offset[1] += direction * self.scrolling_speed
+            self.panning_offset[1] += floor(direction * self.scrolling_speed)
         
         #keep sprite_panel canvas within viewport bounds
         canvas_rect = self.canvas.get_rect()
