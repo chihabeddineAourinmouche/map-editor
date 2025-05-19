@@ -1,8 +1,9 @@
-#!/c/Users/chiha/AppData/Local/Programs/Python/Python39/python
+#!/usr/bin/python3
 
 import pygame
 import random
 import os
+import sys
 
 def generate_random_png_pygame(width=64, height=64, output_path_prefix="random_image", nb_images=1):
     # 1. Initialize Pygame
@@ -68,4 +69,4 @@ def generate_random_png_pygame(width=64, height=64, output_path_prefix="random_i
     pygame.quit()
 
 if __name__ == "__main__":
-    generate_random_png_pygame(nb_images=5)
+    generate_random_png_pygame(nb_images=int(sys.argv[1]) if len(sys.argv) == 2 and sys.argv[1].isnumeric() else 1)
