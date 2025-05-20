@@ -4,9 +4,8 @@ from .utility import *
 from .ImageCache import ImageCache
 from .SpriteData import SpriteData
 from .Logger import Logger
-from .SurfaceRect import SurfaceRect
 
-class Sprite(SurfaceRect):
+class Sprite(Rect):
     selection_color: Color = None
     
     def __init__(self,
@@ -15,7 +14,9 @@ class Sprite(SurfaceRect):
         name: str, _id: Optional[str] = None
         
     ):
-        super().__init__(x, y, image.get_width(), image.get_height(), screen)
+        super().__init__(x, y, image.get_width(), image.get_height())
+
+        self.screen: Surface = screen
         
         self.image: Surface = image
         
@@ -28,13 +29,16 @@ class Sprite(SurfaceRect):
         self.image_cache: ImageCache = ImageCache([])
         
         self.is_selected: bool = False
+        
+        self.absolute_mouse_pos: Coords = pygame.mouse.get_pos()
+        
+        self.external_offset: Coords = [0, 0]
 
     # ANCHOR[id=Setters]
     def set_screen(self, screen: Surface) -> None:
         self.screen = screen
     
     def set_top_left(self, topleft: Coords):
-        self.rect.topleft = topleft
         self.topleft = topleft
 
     def select(self) -> None:
@@ -51,7 +55,7 @@ class Sprite(SurfaceRect):
         return {
             "id": self.id,
             "file_name": self.name,
-            "coordinates": self.rect.topleft
+            "coordinates": self.topleft
         }
     
     def get_data(self) -> SpriteData:
@@ -66,23 +70,19 @@ class Sprite(SurfaceRect):
     def get_name(self) -> str:
         return self.name
 
-    def get_sprite_rect(self, topleft: Optional[Coords]=None) -> Rect:
-        return self.get_rect(topleft=topleft or self.topleft)
+    def get_sprite_rect(self) -> Rect:
+        return self
     
-    def is_hovered(self, absolute_mouse_pos: Coords, offset: Coords) -> bool:
-        return self.get_sprite_rect(add_list(self.topleft, offset)).collidepoint(absolute_mouse_pos)
+    def is_hovered(self) -> bool:
+        offset_rect: Rect = Rect(*add_list(self.topleft, self.external_offset), *self.size)
+        return offset_rect.collidepoint(self.absolute_mouse_pos)
     
     # ANCHOR[id=Update]
-    def _update(self,
-        absolute_mouse_pos: Coords,
+    def update(self,
         event: Event,
-        offset: Coords,
-        selected_id: str,
-        left_click_callback: Callable
+        left_click_callback: Callable,
     ) -> None:
-
-        self.is_selected = self.id == selected_id
-        if self.is_hovered(absolute_mouse_pos, offset):
+        if self.is_hovered():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == MouseButtons.LEFT:
                     if not self.is_selected:
@@ -90,23 +90,32 @@ class Sprite(SurfaceRect):
                         self.select()
                         left_click_callback(self.id)
     
+    def fixed_update(self,
+        offset: Coords,
+        selected_id: str,
+    ):
+        self.absolute_mouse_pos: Coords = pygame.mouse.get_pos()
+        self.external_offset = offset
+        self.is_selected = self.id == selected_id
+    
     def draw_selection_indicator(self):
         if self.is_selected:
                 pygame.draw.rect(
                     self.screen,
                     self.color,
-                    self.rect,
+                    self,
                     2
                 )
     
     def draw_image(self):
-        self.blit(
+        offset_rect: Rect = Rect(*add_list(self.topleft, self.external_offset), *self.size)
+        self.screen.blit(
             self.image,
-            (0, 0)
+            offset_rect
         )
 
     # ANCHOR[id=Update]
-    def _draw(self):
+    def draw(self):
         self.draw_image()
         self.draw_selection_indicator()
 

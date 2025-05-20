@@ -19,6 +19,9 @@ from .Logger import Logger
 from .ConfigUI import ConfigUI
 from .I18n import I18n
 
+OFFSET = 40# FIXME - DEBUG
+
+
 class App:
     # ANCHOR[id=AppClass]
     
@@ -66,8 +69,8 @@ class App:
         
         DrawingArea.icon_size = config.get("drawing_area_icon_size")
         self.drawing_area: DrawingArea = DrawingArea(
-            config.get("drawing_area_x"),
-            config.get("drawing_area_y"),
+            config.get("drawing_area_x") + OFFSET,
+            config.get("drawing_area_y") + OFFSET,
             config.get("drawing_area_width"),
             config.get("drawing_area_height"),
             self.screen,
@@ -350,7 +353,7 @@ class App:
             self.set_mode(self.move_mode_index)
     
     def switch_mode(self):
-        if not self.drawing_area.get_is_drawing_hitbox():
+        if not self.drawing_area.get_is_drawing():
             self.set_mode()
             # TODO - Write this better as if () or () or ()...
             if self.is_delete_mode() and (not len(self.map_data["sprites"]) and not len(self.map_data["hitboxes"])):
@@ -422,7 +425,7 @@ class App:
 
     def save_map_data(self):
         try:
-            self.map_data["world_size"] = self.map_data.get("world_size", self.drawing_area.canvas.get_size())
+            self.map_data["world_size"] = self.map_data.get("world_size", self.drawing_area.canvas_rect.size)
             self.map_data["starting_position"] = self.map_data.get("starting_position", (0, 0))
             with open(self.map_output_file, "w") as f:
                 json.dump(self.map_data, f, indent=4)
@@ -603,7 +606,7 @@ class App:
         return [
             {
                 "type": "text",
-                "data": ", ".join(map(str, self.drawing_area.calculate_snapping_coords() or [] if (self.is_sprite_mode() or self.is_move_mode() and self.drawing_area.is_moving) else self.drawing_area.get_mouse_position_on_canvas() or [])),
+                "data": ", ".join(map(str, self.drawing_area.calculate_snapping_coords() or [] if (self.is_sprite_mode() or self.is_move_mode() and self.drawing_area.is_moving) else self.drawing_area.get_canvas_mouse_pos() or [])),
                 "hint": "x, y",
             },
             {
@@ -625,6 +628,37 @@ class App:
 
 
 
+    def fixed_update(self):
+        # ANCHOR[id=AppFixedUpdate]
+        self.drawing_area.fixed_update(
+            self.is_sprite_mode(),
+            self.is_hitbox_mode(),
+            self.is_delete_mode(),
+            self.is_player_mode(),
+            self.is_move_mode(),
+            self.sprite_panel.get_selected_sprite_id()
+        )
+        self.control.fixed_update(self.get_control_button_update_data())
+        # LINK: #DisplayUpdate
+        is_drawing_area_hovered: bool = self.drawing_area.is_hovered()
+        self.display.update(
+            {
+                "cursor": self.display_cursor_panning if self.drawing_area.get_is_panning()
+                    else self.display_cursor_pointer_danger if self.is_delete_mode() 
+                        and is_drawing_area_hovered
+                        and not self.dialog
+                    else self.display_cursor_move if self.is_move_mode()
+                        and is_drawing_area_hovered
+                        and not self.dialog
+                    else self.display_cursor_player if self.is_player_mode()
+                        and is_drawing_area_hovered
+                        and not self.dialog
+                    else self.display_cursor_pointer,
+            },
+            self.get_display_data(),
+            self.tooltip_text
+        )
+
     # ANCHOR[id=MainLoop]
     def update(self) -> None:
         
@@ -643,12 +677,8 @@ class App:
                 self.sprite_panel.update(event, self.set_sprite_mode, self.switch_mode)
                 
                 # LINK: #DrawingAreaUpdate
-                self.drawing_area.update(event,
-                    self.is_sprite_mode(),
-                    self.is_hitbox_mode(),
-                    self.is_delete_mode(),
-                    self.is_player_mode(),
-                    self.is_move_mode(),
+                self.drawing_area.update(
+                    event,
                     self.sprite_panel.get_sprites(),
                     self.sprite_panel.get_selected_sprite_id(),
                     self.switch_mode,
@@ -711,33 +741,6 @@ class App:
                     pass
                 
 
-    def fixed_update(self):
-        # ANCHOR[id=AppFixedUpdate]
-        self.drawing_area.fixed_update(
-            self.is_delete_mode(),
-            self.is_move_mode()
-        )
-        self.control.fixed_update(self.get_control_button_update_data())
-        # LINK: #DisplayUpdate
-        is_drawing_area_hovered: bool = self.drawing_area.is_hovered()
-        self.display.update(
-            {
-                "cursor": self.display_cursor_panning if self.drawing_area.get_is_panning()
-                    else self.display_cursor_pointer_danger if self.is_delete_mode() 
-                        and is_drawing_area_hovered
-                        and not self.dialog
-                    else self.display_cursor_move if self.is_move_mode()
-                        and is_drawing_area_hovered
-                        and not self.dialog
-                    else self.display_cursor_player if self.is_player_mode()
-                        and is_drawing_area_hovered
-                        and not self.dialog
-                    else self.display_cursor_pointer,
-            },
-            self.get_display_data(),
-            self.tooltip_text
-        )
-
     def draw(self) -> None:
         # ANCHOR[id=AppDraw]
         # LINK: #DrawingAreaDraw
@@ -758,8 +761,9 @@ class App:
         
         # Always draw display cursor on top of display tooltip and draw both on top of all other elements
         self.display.draw_tooltip()
-        if not (self.is_sprite_mode() and self.drawing_area.is_hovered() and not self.drawing_area.is_panning and not self.dialog):
-            self.display.draw_cursor()
+        # if not (self.is_sprite_mode() and self.drawing_area.is_hovered() and not self.drawing_area.is_panning and not self.dialog) and not (self.is_move_mode and self.drawing_area.is_moving):
+        #     self.display.draw_cursor()
+        self.display.draw_cursor()# FIXME - DEBUG
 
         pygame.display.flip()
 

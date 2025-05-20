@@ -17,6 +17,8 @@ Event = pygame.event.Event
 Coords = Tuple[int, int]
 Color = Tuple[int, int, int]
 
+INF: int = 999999
+
 class MouseButtons:
     # ANCHOR - MouseButtons
     LEFT = 1
@@ -38,6 +40,10 @@ class KeyboardKeys:
     D = pygame.K_d
     P = pygame.K_p
     M = pygame.K_m
+
+def format_coordinates(coords: Coords):
+    x, y = coords
+    return f"{x:5d}, {y:5d}"
 
 def load_json_to_dict(filepath: str) -> Dict:
     if not os.path.exists(filepath):

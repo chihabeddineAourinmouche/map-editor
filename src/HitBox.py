@@ -10,6 +10,7 @@ class HitBox:
         self.id: str = _id or str(u4())
         self.rect: Rect = Rect(x, y, width, height)
         self.alpha_surface: Surface = Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        self.external_offset = [0, 0]
     
     def get_id(self) -> str:
         return self.id
@@ -29,19 +30,21 @@ class HitBox:
     def get_top_left(self):
         return self.rect.topleft
     
-    def is_hovered(self, offset: Coords, mouse_pos: Coords) -> bool:
-        # offset should be canvas' coordinate + the panning offset + the drawing area's coordinate
-        return Rect(self.rect.x + offset[0], self.rect.y + offset[1], *self.rect.size).collidepoint(mouse_pos)
+    def is_hovered(self, absolute_mouse_pos: Coords) -> bool:
+        return Rect(self.rect.x + self.external_offset[0], self.rect.y + self.external_offset[1], *self.rect.size).collidepoint(absolute_mouse_pos)
     
-    def update(self, event: Event) -> None:
-        # Resize
-        # Move
-        pass
+    def update(self, external_offset: Coords) -> None:
+        self.external_offset = external_offset
 
     def draw(self, surface: Surface) -> None:
-        pygame.draw.rect(self.alpha_surface, self.color + list((128,)), (0, 0, self.rect.width, self.rect.height))
+        offset_rect: Rect = Rect(
+            *add_list(self.rect.topleft, self.external_offset),
+            *self.rect.size
+        )
+        pygame.draw.rect(self.alpha_surface, self.color + list((128,)), (0, 0, offset_rect.width, offset_rect.height))
+        
         # Draw diagonals
-        surface.blit(self.alpha_surface, self.rect.topleft)
-        pygame.draw.line(surface, self.color, (self.rect.left, self.rect.top), (self.rect.right - 1, self.rect.bottom - 1), width=1)
-        pygame.draw.line(surface, self.color, (self.rect.left, self.rect.bottom - 1), (self.rect.right - 1, self.rect.top), width=1)
-        pygame.draw.rect(surface, self.color, self.rect, 2)
+        surface.blit(self.alpha_surface, offset_rect.topleft)
+        pygame.draw.line(surface, self.color, (offset_rect.left, offset_rect.top), (offset_rect.right - 1, offset_rect.bottom - 1), width=1)
+        pygame.draw.line(surface, self.color, (offset_rect.left, offset_rect.bottom - 1), (offset_rect.right - 1, offset_rect.top), width=1)
+        pygame.draw.rect(surface, self.color, offset_rect, 2)

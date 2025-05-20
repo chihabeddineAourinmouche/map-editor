@@ -127,7 +127,7 @@ class SpritePanel(SubSurfaceRect):
         return self.sprites
     
     def get_sprites_intersecting_rectangle(self, rect: Rect) -> List[Sprite]:
-        return list(filter(lambda sprite: rect.colliderect(sprite.get_sprite_rect()), self.sprites))
+        return list(filter(lambda sprite: rect.colliderect(sprite), self.sprites))
 
     def get_viewport_rect(self) -> Rect:
         return Rect(
@@ -187,9 +187,9 @@ class SpritePanel(SubSurfaceRect):
     
     def update_sprite_selection(self, event: Event):
         for sprite in self.get_sprites_intersecting_rectangle(self.get_viewport_rect()):
-            canvas_rect = self.canvas.get_rect(topleft=[self.rect.x, self.rect.y + self.scroll_offset])
             sprite.deselect()
-            sprite.update(event, canvas_rect.topleft, self.selected_sprite_id, self.set_selected_sprite_id)
+            sprite.fixed_update([0, self.scroll_offset], self.selected_sprite_id)
+            sprite.update(event, self.set_selected_sprite_id)
 
     # ANCHOR[id=SpritePanelUpdate]
     def _update(self, absolute_mouse_pos: Coords, event: Event, left_click_callback: Callable, right_click_callback: Callable) -> None:
